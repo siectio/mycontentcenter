@@ -1,0 +1,3767 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>My Command Center</title>
+  <style>
+    :root {
+      --bg-app: #F8FAFC;
+      --surface: #FFFFFF;
+      --surface-muted: #F1F5F9;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-muted: #94A3B8;
+      --border: #E2E8F0;
+
+      --color-brand: #0F172A;
+      --color-personal: #D97706;
+      --color-personal-bg: #FEF3C7;
+      --color-devimpact: #0F766E;
+      --color-devimpact-bg: #CCFBF1;
+      --color-product: #4F46E5;
+      --color-product-bg: #E0E7FF;
+      --color-danger: #DC2626;
+      --color-danger-bg: #FEE2E2;
+      --color-success: #16A34A;
+      --color-success-bg: #DCFCE7;
+
+      --sidebar-w: 245px;
+      --radius: 10px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: var(--bg-app);
+      color: var(--text-primary);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .app-shell { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 40;
+      transition: transform 0.2s ease;
+    }
+
+    .sidebar-header { padding: 18px 20px; border-bottom: 1px solid var(--border); }
+    .sidebar-title { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+    .sidebar-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    .nav-list { list-style: none; padding: 12px 10px; flex: 1; overflow-y: auto; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-weight: 500;
+      margin-bottom: 3px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-item:hover { background: var(--surface-muted); color: var(--text-primary); }
+    .nav-item.active { background: var(--color-brand); color: #FFFFFF; }
+
+    .nav-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+
+    .phase-tag {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 99px;
+      background: var(--surface-muted);
+      color: var(--text-secondary);
+    }
+    .nav-item.active .phase-tag { background: rgba(255, 255, 255, 0.2); color: #FFFFFF; }
+
+    .main-wrapper {
+      flex: 1;
+      margin-left: var(--sidebar-w);
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+
+    .menu-btn {
+      display: none;
+      background: var(--surface-muted);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .page-heading { font-size: 17px; font-weight: 700; }
+    .date-meta { font-size: 12px; color: var(--text-secondary); }
+    .topbar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    .content-area { padding: 20px 24px 48px; max-width: 1260px; width: 100%; margin: 0 auto; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: opacity 0.15s, background 0.15s;
+      text-decoration: none;
+    }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-primary { background: var(--color-brand); color: #FFFFFF; }
+    .btn-primary:hover { opacity: 0.92; }
+    .btn-personal { background: var(--color-personal); color: #FFFFFF; }
+    .btn-devimpact { background: var(--color-devimpact); color: #FFFFFF; }
+    .btn-product { background: var(--color-product); color: #FFFFFF; }
+    .btn-secondary { background: var(--surface); border-color: var(--border); color: var(--text-primary); }
+    .btn-secondary:hover { background: var(--surface-muted); }
+    .btn-danger { background: var(--color-danger-bg); color: var(--color-danger); }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-chip {
+      padding: 5px 10px;
+      font-size: 12px;
+      border-radius: 99px;
+      background: var(--surface-muted);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-chip:hover, .btn-chip.active {
+      background: var(--color-brand);
+      color: #FFFFFF;
+      border-color: var(--color-brand);
+    }
+
+    .input, .select, .textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-size: 13px;
+      font-family: inherit;
+      background: var(--surface);
+      color: var(--text-primary);
+    }
+    .textarea { resize: vertical; line-height: 1.5; }
+    .input:focus, .select:focus, .textarea:focus { outline: none; border-color: var(--color-product); }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 18px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+
+    .kpi-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .kpi-label { font-size: 11.5px; color: var(--text-secondary); font-weight: 600; }
+    .kpi-value { font-size: 22px; font-weight: 800; margin-top: 2px; color: var(--text-primary); }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 14px;
+    }
+    .card-alert { border-left: 4px solid var(--color-danger); }
+    .card-personal { border-top: 4px solid var(--color-personal); }
+    .card-devimpact { border-top: 4px solid var(--color-devimpact); }
+    .card-product { border-top: 4px solid var(--color-product); }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .card-title { font-size: 14.5px; font-weight: 700; color: var(--text-primary); }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin: 18px 0 8px;
+    }
+
+    .quick-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .quick-bar .input { flex: 1; min-width: 200px; }
+    .quick-bar .select { width: auto; min-width: 145px; }
+
+    .subtabs {
+      display: flex;
+      gap: 6px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-personal { background: var(--color-personal-bg); color: var(--color-personal); }
+    .badge-devimpact { background: var(--color-devimpact-bg); color: var(--color-devimpact); }
+    .badge-product { background: var(--color-product-bg); color: var(--color-product); }
+    .badge-general { background: var(--surface-muted); color: var(--text-secondary); }
+    .badge-high { background: var(--color-danger-bg); color: var(--color-danger); }
+    .badge-medium { background: #FEF3C7; color: #B45309; }
+    .badge-low { background: var(--surface-muted); color: var(--text-secondary); }
+    .badge-done { background: var(--color-success-bg); color: var(--color-success); }
+    .badge-series { background: #F3E8FF; color: #7E22CE; }
+
+    .task-item {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .task-item:last-child { border-bottom: none; }
+
+    .task-left { display: flex; align-items: flex-start; gap: 10px; flex: 1; min-width: 0; }
+    .task-checkbox { width: 17px; height: 17px; margin-top: 2px; cursor: pointer; accent-color: var(--color-brand); }
+    .task-title { font-weight: 600; font-size: 13.5px; word-break: break-word; }
+    .task-title.done { text-decoration: line-through; color: var(--text-muted); }
+
+    .task-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 5px;
+      font-size: 11.5px;
+      color: var(--text-secondary);
+    }
+
+    .snippet-box {
+      margin-top: 6px;
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      background: var(--bg-app);
+      padding: 8px 10px;
+      border-radius: 6px;
+      white-space: pre-line;
+      max-height: 110px;
+      overflow-y: auto;
+    }
+
+    .milestone-panel {
+      background: var(--bg-app);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-top: 12px;
+    }
+
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(150px, 1fr));
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+    .day-col {
+      background: var(--bg-app);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      min-height: 220px;
+    }
+    .day-col.today {
+      border: 2px solid var(--color-product);
+      background: #F5F7FF;
+    }
+    .day-col-header {
+      font-weight: 700;
+      font-size: 12px;
+      padding-bottom: 6px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .cal-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--color-brand);
+      border-radius: 6px;
+      padding: 6px 8px;
+      margin-bottom: 6px;
+      font-size: 11.5px;
+      box-shadow: var(--shadow-sm);
+    }
+    .cal-pill.personal { border-left-color: var(--color-personal); }
+    .cal-pill.devimpact { border-left-color: var(--color-devimpact); }
+    .cal-pill.product { border-left-color: var(--color-product); }
+
+    .progress-wrap { background: var(--surface-muted); height: 8px; border-radius: 99px; overflow: hidden; margin: 8px 0; }
+    .progress-fill { background: var(--color-product); height: 100%; transition: width 0.3s ease; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      z-index: 60;
+    }
+    .modal-backdrop.open { display: flex; }
+
+    .modal-box {
+      background: var(--surface);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 560px;
+      max-height: 92vh;
+      overflow-y: auto;
+      padding: 20px;
+      box-shadow: var(--shadow-md);
+    }
+    .modal-box.modal-wide { max-width: 980px; }
+
+    .editor-split { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 18px; }
+
+    .ai-panel { background: var(--bg-app); border: 1px solid var(--border); border-radius: 9px; padding: 14px; }
+    .chip-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
+
+    .prompt-preview {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      background: #0F172A;
+      color: #F8FAFC;
+      padding: 10px 12px;
+      border-radius: 7px;
+      min-height: 120px;
+      max-height: 220px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      margin-bottom: 8px;
+    }
+
+    .form-group { margin-bottom: 12px; }
+    .form-label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: var(--text-secondary); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--color-brand);
+      color: #FFFFFF;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: var(--shadow-md);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 80;
+    }
+    .toast.show { opacity: 1; }
+
+    .empty-state { text-align: center; padding: 24px 12px; color: var(--text-muted); font-size: 13px; }
+
+    .sidebar-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.35);
+      z-index: 35;
+    }
+
+    @media (max-width: 900px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .sidebar-backdrop.open { display: block; }
+      .main-wrapper { margin-left: 0; }
+      .menu-btn { display: inline-flex; }
+      .grid-2, .grid-3, .grid-4, .editor-split, .form-row { grid-template-columns: 1fr; }
+      .content-area { padding: 14px; }
+      .topbar { padding: 10px 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">MY COMMAND CENTER</div>
+        <div class="sidebar-subtitle">Personal Operating System v1.0</div>
+      </div>
+
+      <ul class="nav-list" id="navList">
+        <li class="nav-item active" data-view="today" onclick="navigateTo('today')">
+          <span>Today's Focus</span>
+          <span class="phase-tag">Live</span>
+        </li>
+        <li class="nav-item" data-view="ideas" onclick="navigateTo('ideas')">
+          <span>Idea Management</span>
+          <span class="phase-tag">Live</span>
+        </li>
+        <li class="nav-item" data-view="personal" onclick="navigateTo('personal')">
+          <span><span class="nav-dot" style="background:var(--color-personal)"></span>Personal Threads</span>
+          <span class="phase-tag">Live</span>
+        </li>
+        <li class="nav-item" data-view="devimpact" onclick="navigateTo('devimpact')">
+          <span><span class="nav-dot" style="background:var(--color-devimpact)"></span>Dev.Impact</span>
+          <span class="phase-tag">Live</span>
+        </li>
+        <li class="nav-item" data-view="products" onclick="navigateTo('products')">
+          <span><span class="nav-dot" style="background:var(--color-product)"></span>Digital Products</span>
+          <span class="phase-tag">Live</span>
+        </li>
+        <li class="nav-item" data-view="tasks" onclick="navigateTo('tasks')">
+          <span>Calendar & Tasks</span>
+          <span class="phase-tag">Live</span>
+        </li>
+        <li class="nav-item" data-view="weekly" onclick="navigateTo('weekly')">
+          <span>Weekly Review</span>
+          <span class="phase-tag">Live</span>
+        </li>
+        <li class="nav-item" data-view="settings" onclick="navigateTo('settings')">
+          <span>Settings & DB</span>
+          <span class="phase-tag">Live</span>
+        </li>
+      </ul>
+    </aside>
+
+    <div class="main-wrapper">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="menu-btn" onclick="toggleSidebar(true)" aria-label="Menu">☰</button>
+          <div>
+            <div class="page-heading" id="topbarTitle">Today's Focus</div>
+            <div class="date-meta" id="topbarDate">Memuat jadwal Asia/Jakarta...</div>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-secondary btn-sm" onclick="loadDashboard()">↻ Refresh</button>
+          <button class="btn btn-secondary btn-sm" onclick="openIdeaModal()">+ Idea</button>
+          <button class="btn btn-secondary btn-sm" onclick="openProductModal()">+ Product</button>
+          <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ Task</button>
+        </div>
+      </header>
+
+      <main class="content-area" id="mainContainer">
+        <div class="empty-state">Menghubungkan ke database Google Sheets...</div>
+      </main>
+    </div>
+  </div>
+
+  <!-- MODAL 1: TASK & TIME-BLOCKING EDITOR -->
+  <div class="modal-backdrop" id="taskModal">
+    <div class="modal-box">
+      <div class="card-header">
+        <div class="card-title" id="taskModalTitle">Tambah Tugas & Time-Block</div>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('taskModal')">✕</button>
+      </div>
+      <form id="taskForm" onsubmit="handleSaveTask(event)">
+        <input type="hidden" id="taskId">
+        <div class="form-group">
+          <label class="form-label">Nama Tugas *</label>
+          <input type="text" class="input" id="taskTitle" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Kategori / Modul</label>
+            <select class="select" id="taskModule">
+              <option value="General">General</option>
+              <option value="Personal Threads">Personal Threads</option>
+              <option value="Dev.Impact">Dev.Impact</option>
+              <option value="Digital Product">Digital Product</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tautan Produk / Ref ID</label>
+            <select class="select" id="taskRefId">
+              <option value="">-- Tidak ada --</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Prioritas</label>
+            <select class="select" id="taskPriority">
+              <option value="High">High</option>
+              <option value="Medium" selected>Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="select" id="taskStatus">
+              <option value="To Do">To Do</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Blocked">Blocked</option>
+              <option value="Done">Done</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tenggat Waktu (Due Date)</label>
+            <input type="date" class="input" id="taskDueDate">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Pengingat Kalender (Menit)</label>
+            <select class="select" id="taskReminder">
+              <option value="15">15 menit sebelum</option>
+              <option value="30">30 menit sebelum</option>
+              <option value="60">60 menit sebelum</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="background:var(--bg-app); border:1px solid var(--border); padding:10px; border-radius:8px; margin-bottom:12px;">
+          <div style="font-size:11.5px; font-weight:700; color:var(--text-secondary); margin-bottom:6px;">
+            🕒 Time-Blocking Kalender (Opsional — untuk Google Calendar & Outlook)
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Waktu Mulai (WIB)</label>
+              <input type="datetime-local" class="input" id="taskSchedStart">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Waktu Selesai (WIB)</label>
+              <input type="datetime-local" class="input" id="taskSchedEnd">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;">
+            <input type="checkbox" id="taskMilestone">
+            <span>Tandai sebagai <strong>Milestone</strong> proyek</span>
+          </label>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('taskModal')">Batal</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveTask">Simpan Tugas</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: IDEA WORKBENCH & MANUAL AI ASSISTANT -->
+  <div class="modal-backdrop" id="ideaModal">
+    <div class="modal-box modal-wide">
+      <div class="card-header">
+        <div class="card-title" id="ideaModalTitle">Tambah / Olah Ide</div>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('ideaModal')">✕</button>
+      </div>
+
+      <div class="editor-split">
+        <form id="ideaForm" onsubmit="handleSaveIdea(event)">
+          <input type="hidden" id="ideaId">
+          <div class="form-group">
+            <label class="form-label">Inti / Judul Ide *</label>
+            <input type="text" class="input" id="ideaTitle" required placeholder="Tulis inti ide secara singkat...">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Sumber Ide</label>
+              <select class="select" id="ideaSource">
+                <option value="Personal Experience">Personal Experience</option>
+                <option value="Reading/Research">Reading / Research</option>
+                <option value="Observation">Observation</option>
+                <option value="Conversation">Conversation</option>
+                <option value="Professional">Professional Activities</option>
+                <option value="Travel">Travel Experiences</option>
+                <option value="Product Opportunity">New Product Opportunity</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Kategori Proyek</label>
+              <select class="select" id="ideaCategory">
+                <option value="Personal Threads">Personal Threads</option>
+                <option value="Dev.Impact">Dev.Impact</option>
+                <option value="Digital Product">Digital Product</option>
+                <option value="General">General</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Prioritas</label>
+              <select class="select" id="ideaPriority">
+                <option value="High">High</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Status Ide</label>
+              <select class="select" id="ideaStatus">
+                <option value="New Idea">New Idea</option>
+                <option value="Under Review">Under Review</option>
+                <option value="Developed">Developed</option>
+                <option value="Converted to Task">Converted to Task</option>
+                <option value="Archived">Archived</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Catatan Mentah (Raw Notes)</label>
+            <textarea class="textarea" id="ideaRawNotes" rows="4" placeholder="Tuangkan konteks, cerita, atau data awal tanpa perlu rapi..."></textarea>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('ideaModal')">Tutup</button>
+            <button type="submit" class="btn btn-primary" id="btnSaveIdea">Simpan Ide</button>
+          </div>
+        </form>
+
+        <div class="ai-panel">
+          <div style="font-weight:700; font-size:13px;">🤖 Manual AI Assistant (ChatGPT / Gemini)</div>
+          <div style="font-size:11.5px; color:var(--text-secondary); margin-top:2px;">
+            Klik tombol aksi untuk merakit prompt, salin ke ChatGPT/Gemini, lalu simpan hasilnya di bawah.
+          </div>
+
+          <div class="chip-wrap">
+            <button type="button" class="btn-chip" onclick="buildIdeaPrompt('develop')">Develop This Idea</button>
+            <button type="button" class="btn-chip" onclick="buildIdeaPrompt('angles')">Generate Content Angles</button>
+            <button type="button" class="btn-chip" onclick="buildIdeaPrompt('outline')">Generate Writing Outline</button>
+            <button type="button" class="btn-chip" onclick="buildIdeaPrompt('series')">Generate Content Series</button>
+            <button type="button" class="btn-chip" onclick="buildIdeaPrompt('audience')">Identify Target Audience</button>
+            <button type="button" class="btn-chip" onclick="buildIdeaPrompt('actions')">Generate Next Actions</button>
+          </div>
+
+          <div class="prompt-preview" id="ideaPromptBox">Pilih salah satu tombol aksi di atas untuk membuat prompt siap salin...</div>
+          <button type="button" class="btn btn-secondary btn-sm" style="width:100%; margin-bottom:10px;" onclick="copyPromptFromBox('ideaPromptBox')">
+            📋 Copy Prompt ke Clipboard
+          </button>
+
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Output AI Terpilih (Tersimpan ke Database)</label>
+            <textarea class="textarea" id="ideaAiNotes" rows="4" placeholder="Tempel (paste) hasil terbaik dari ChatGPT atau Gemini di sini, lalu klik Simpan Ide..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: CONTENT STUDIO -->
+  <div class="modal-backdrop" id="contentModal">
+    <div class="modal-box modal-wide">
+      <div class="card-header">
+        <div class="card-title" id="contentModalTitle">Content Studio</div>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('contentModal')">✕</button>
+      </div>
+
+      <div class="editor-split">
+        <form id="contentForm" onsubmit="handleSaveContent(event)">
+          <input type="hidden" id="contentId">
+          <input type="hidden" id="contentAccount">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Mode / Format Konten</label>
+              <select class="select" id="contentInputMode" onchange="toggleContentModeUI()">
+                <option value="Capture Idea">Mode 1: Capture Idea (Pengembangan Awal)</option>
+                <option value="Ready to Publish">Mode 2: Ready to Publish (Finalisasi & Jadwal)</option>
+                <option value="Post statis">Post statis</option>
+                <option value="Carousel">Carousel</option>
+                <option value="Carousel + grafik">Carousel + grafik</option>
+                <option value="Carousel data">Carousel data</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Content Pillar *</label>
+              <select class="select" id="contentPillar" required></select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Status Konten</label>
+              <select class="select" id="contentStatus">
+                <option value="Idea">Idea</option>
+                <option value="Developing">Developing</option>
+                <option value="Draft">Draft</option>
+                <option value="Ready to Publish">Ready to Publish</option>
+                <option value="Scheduled">Scheduled</option>
+                <option value="Published">Published</option>
+                <option value="Archived">Archived</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Jadwal Tayang (WIB)</label>
+              <input type="datetime-local" class="input" id="contentScheduledAt">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Series ID (Opsional)</label>
+              <input type="text" class="input" id="contentSeriesId" placeholder="Misal: SER-001">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Urutan dalam Series</label>
+              <input type="number" class="input" id="contentSeriesOrder" min="1" placeholder="1, 2, 3...">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Hook / Pembuka Utama *</label>
+            <textarea class="textarea" id="contentHook" rows="2" required placeholder="Kalimat pertama yang menghentikan scroll pembaca..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <label class="form-label">Isi Utas / Draf Threads (Pisahkan antar-post dengan baris ---)</label>
+              <span id="threadStats" style="font-size:11px; color:var(--text-muted);">0 post | 0 karakter</span>
+            </div>
+            <textarea class="textarea" id="contentBody" rows="6" oninput="updateThreadCounter()" placeholder="Post 1...&#10;---&#10;Post 2..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" id="visualLabel">Rekomendasi Visual / Foto</label>
+            <textarea class="textarea" id="contentVisual" rows="2" placeholder="Catatan konsep foto atau chart..."></textarea>
+          </div>
+
+          <div id="publishMetaBox" style="background:var(--surface-muted); padding:10px; border-radius:7px; margin-bottom:12px;">
+            <div style="font-size:11.5px; font-weight:700; margin-bottom:6px; color:var(--text-secondary);">
+              📊 Tracking Publikasi & Performa Post
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">URL Post Threads</label>
+                <input type="url" class="input" id="contentPostUrl" placeholder="https://www.threads.net/...">
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Metrik Performa (Views/Likes/Replies)</label>
+                <input type="text" class="input" id="contentPerfMetrics" placeholder="Misal: 4.2K views, 120 likes, 18 replies">
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('contentModal')">Batal</button>
+            <button type="submit" class="btn btn-primary" id="btnSaveContent">Simpan Konten</button>
+          </div>
+        </form>
+
+        <div class="ai-panel">
+          <div style="font-weight:700; font-size:13px;">✍️ AI Content & Visual Assistant</div>
+          <div style="font-size:11.5px; color:var(--text-secondary); margin-top:2px;" id="aiAccountToneHint">
+            Prompt otomatis disesuaikan dengan identitas & tone akun ini.
+          </div>
+
+          <div style="font-size:11px; font-weight:700; margin-top:10px; color:var(--text-secondary);">PENULISAN & STRATEGI UTAS</div>
+          <div class="chip-wrap">
+            <button type="button" class="btn-chip" onclick="buildContentPrompt('develop')">Develop Raw Idea</button>
+            <button type="button" class="btn-chip" onclick="buildContentPrompt('perspectives')">Alt. Perspectives</button>
+            <button type="button" class="btn-chip" onclick="buildContentPrompt('hooks')">5 Strong Hooks</button>
+            <button type="button" class="btn-chip" onclick="buildContentPrompt('outline')">Threads Outline</button>
+            <button type="button" class="btn-chip" onclick="buildContentPrompt('series')">Multi-Day Series</button>
+            <button type="button" class="btn-chip" onclick="buildContentPrompt('proofread')">Edit & Proofread</button>
+            <button type="button" class="btn-chip" onclick="buildContentPrompt('schedule')">Schedule Advice</button>
+            <button type="button" class="btn-chip" onclick="buildContentPrompt('references')">Find References</button>
+          </div>
+
+          <div style="font-size:11px; font-weight:700; margin-top:6px; color:var(--text-secondary);" id="visualSectionTitle">
+            VISUAL DESIGN ASSISTANT
+          </div>
+          <div class="chip-wrap" id="visualPromptChips"></div>
+
+          <div class="prompt-preview" id="contentPromptBox">Pilih tombol bantuan AI di atas untuk membuat prompt...</div>
+          <button type="button" class="btn btn-secondary btn-sm" style="width:100%;" onclick="copyPromptFromBox('contentPromptBox')">
+            📋 Copy Prompt ke Clipboard
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: CONTENT SERIES GENERATOR -->
+  <div class="modal-backdrop" id="seriesModal">
+    <div class="modal-box">
+      <div class="card-header">
+        <div class="card-title" id="seriesModalTitle">Buat Multi-Day Content Series</div>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('seriesModal')">✕</button>
+      </div>
+      <form onsubmit="handleCreateSeries(event)">
+        <input type="hidden" id="seriesAccount">
+        <div class="form-group">
+          <label class="form-label">Topik Utama Series *</label>
+          <input type="text" class="input" id="seriesTopic" required placeholder="Contoh: Memahami Kemiskinan Multidimensi di Indonesia">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Content Pillar</label>
+            <select class="select" id="seriesPillar"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Jumlah Hari / Post (2–14)</label>
+            <input type="number" class="input" id="seriesCount" min="2" max="14" value="5" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tanggal Mulai Tayang (Opsional)</label>
+          <input type="date" class="input" id="seriesStartDate">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Daftar Hook/Outline per Hari (Opsional, 1 baris = 1 post)</label>
+          <textarea class="textarea" id="seriesOutlines" rows="5" placeholder="Hari 1: Kenapa garis kemiskinan moneter belum cukup?&#10;Hari 2: 3 dimensi utama kemiskinan multidimensi..."></textarea>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('seriesModal')">Batal</button>
+          <button type="submit" class="btn btn-primary" id="btnCreateSeries">Generate Series</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 5: DIGITAL PRODUCT WORKBENCH & AI PRODUCT STRATEGIST -->
+  <div class="modal-backdrop" id="productModal">
+    <div class="modal-box modal-wide">
+      <div class="card-header">
+        <div class="card-title" id="productModalTitle">Tambah / Kelola Produk Digital</div>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('productModal')">✕</button>
+      </div>
+
+      <div class="editor-split">
+        <form id="productForm" onsubmit="handleSaveProduct(event)">
+          <input type="hidden" id="productId">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Nama Produk Digital *</label>
+              <input type="text" class="input" id="productName" required placeholder="Contoh: Ebook Umrah Mandiri">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Jenis Produk</label>
+              <select class="select" id="productType">
+                <option value="Ebook">Ebook / Panduan PDF</option>
+                <option value="Toolkit/Template">Toolkit / Template Excel & Notion</option>
+                <option value="Online Course">Online Course / Mini Class</option>
+                <option value="Research Playbook">Research / Policy Playbook</option>
+                <option value="Digital Bundle">Digital Bundle</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Tahap Produksi (Stage)</label>
+              <select class="select" id="productStage">
+                <option value="Idea">Idea</option>
+                <option value="Validation">Validation</option>
+                <option value="Outline">Outline</option>
+                <option value="Development">Development</option>
+                <option value="Editing/Review">Editing/Review</option>
+                <option value="Launch Prep">Launch Prep</option>
+                <option value="Launched">Launched</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Status Portofolio</label>
+              <select class="select" id="productCompletionStatus">
+                <option value="Active">Active</option>
+                <option value="On Hold">On Hold</option>
+                <option value="Completed">Completed</option>
+                <option value="Archived">Archived</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Progres Penyelesaian: <strong id="productProgressLabel">0%</strong></label>
+              <input type="range" id="productProgress" min="0" max="100" value="0" style="width:100%; margin-top:8px;"
+                oninput="document.getElementById('productProgressLabel').textContent = this.value + '%'">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Target Tanggal Rilis (Launch Target)</label>
+              <input type="date" class="input" id="productLaunchTarget">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Tautan Folder Kerja (OneDrive / Google Drive URL)</label>
+            <input type="url" class="input" id="productOneDriveUrl" placeholder="https://onedrive.live.com/... atau https://drive.google.com/...">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Target Audiens (Siapa pembelinya?)</label>
+            <input type="text" class="input" id="productAudience" placeholder="Contoh: Keluarga muda yang ingin merencanakan umrah mandiri pertama kali">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Value Proposition (Manfaat utama bagi pembeli)</label>
+            <input type="text" class="input" id="productValueProp" placeholder="Contoh: Hemat biaya hingga 30% dengan template budgeting & checklist lengkap">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Deskripsi, Struktur Bab & Catatan Produksi</label>
+            <textarea class="textarea" id="productDescription" rows="4" placeholder="Tuliskan outline bab, bonus file, atau catatan harga..."></textarea>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('productModal')">Batal</button>
+            <button type="submit" class="btn btn-product" id="btnSaveProduct">Simpan Produk</button>
+          </div>
+        </form>
+
+        <div class="ai-panel">
+          <div style="font-weight:700; font-size:13px;">🚀 AI Product Strategist</div>
+          <div style="font-size:11.5px; color:var(--text-secondary); margin-top:2px;">
+            Rakit prompt untuk merancang struktur produk, strategi harga, halaman penjualan, hingga kampanye rilis di Threads.
+          </div>
+
+          <div class="chip-wrap">
+            <button type="button" class="btn-chip" onclick="buildProductPrompt('blueprint')">Product Blueprint & Outline</button>
+            <button type="button" class="btn-chip" onclick="buildProductPrompt('audience')">Audience & Pain Points</button>
+            <button type="button" class="btn-chip" onclick="buildProductPrompt('pricing')">Pricing & Bonus Offer</button>
+            <button type="button" class="btn-chip" onclick="buildProductPrompt('salespage')">Landing Page Copy</button>
+            <button type="button" class="btn-chip" onclick="buildProductPrompt('launch')">7-Day Threads Launch</button>
+            <button type="button" class="btn-chip" onclick="buildProductPrompt('milestones')">Production Checklist</button>
+          </div>
+
+          <div class="prompt-preview" id="productPromptBox">Pilih salah satu tombol strategi produk di atas untuk membuat prompt...</div>
+          <button type="button" class="btn btn-secondary btn-sm" style="width:100%;" onclick="copyPromptFromBox('productPromptBox')">
+            📋 Copy Prompt ke Clipboard
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const APP_STATE = {
+      currentView: 'today',
+      data: null,
+      taskTab: 'calendar',
+      taskFilterModule: 'ALL',
+      taskFilterStatus: 'ALL',
+      taskSearch: '',
+      ideaFilterCat: 'ALL',
+      ideaFilterStatus: 'ALL',
+      ideaFilterPrio: 'ALL',
+      ideaSearch: '',
+      contentTab: 'pipeline',
+      contentFilterStatus: 'ALL',
+      contentFilterPillar: 'ALL',
+      contentSearch: '',
+      productFilterStage: 'ALL',
+      productFilterStatus: 'ALL',
+      productSearch: '',
+      activeReviewDraft: null
+    };
+
+    const ACCOUNT_CONFIG = {
+      Personal: {
+        title: 'Personal Threads Workspace',
+        badgeClass: 'badge-personal',
+        cardClass: 'card-personal',
+        btnClass: 'btn-personal',
+        pillars: [
+          'Parenting Reflections',
+          'Travel Experiences',
+          'Life Reflections',
+          'Personal Observations'
+        ],
+        positioning: 'Akun personal tentang parenting, perjalanan, keluarga, dan refleksi kehidupan sehari-hari.',
+        tone: 'Personal, autentik, reflektif, hangat, dan mengalir seperti bercerita kepada teman dekat (bukan bahasa institusi/seminar formal).',
+        visualGuidance: 'Prioritaskan foto personal autentik (candid keluarga, suasana perjalanan, objek sehari-hari) daripada infografis kaku.'
+      },
+      'Dev.Impact': {
+        title: 'Dev.Impact Workspace',
+        badgeClass: 'badge-devimpact',
+        cardClass: 'card-devimpact',
+        btnClass: 'btn-devimpact',
+        pillars: [
+          'Identitas & komunikasi',
+          'Memahami pembangunan',
+          'Riset & bukti',
+          'Sejarah & ketimpangan',
+          'Literasi & data',
+          'Development Insights',
+          'Statistics in Practice',
+          'Research and Methodology',
+          'Data to Policy'
+        ],
+        positioning: 'Platform berbagi pengetahuan profesional yang menjelaskan tantangan pembangunan dan kebijakan publik berbasis statistik, riset, dan bukti empiris.',
+        tone: 'Analitis, kritis, informatif, berbasis bukti/data, namun tetap jernih dan mudah dicerna pembaca awam di Threads.',
+        visualGuidance: 'Gunakan infografis bersih, chart statistik yang tepat, carousel edukasi, atau visualisasi ringkasan riset.'
+      }
+    };
+
+    const VIEW_TITLES = {
+      today: "Today's Focus",
+      ideas: 'Idea Management',
+      personal: 'Personal Threads',
+      devimpact: 'Dev.Impact',
+      products: 'Digital Products Portfolio',
+      tasks: 'Calendar, Time-Blocking & Tasks',
+      weekly: 'Weekly Accountability Review',
+      settings: 'Settings, Reminders & DB'
+    };
+
+    function normalizeAccount(acc) {
+      const val = String(acc || '').trim().toLowerCase();
+      if (val === 'dev.impact' || val === 'devimpact') return 'Dev.Impact';
+      if (val === 'personal' || val === 'personal threads') return 'Personal';
+      return String(acc || '').trim();
+    }
+
+    function getAccountPillars(account) {
+      const norm = normalizeAccount(account);
+      const base = ACCOUNT_CONFIG[norm] ? [...ACCOUNT_CONFIG[norm].pillars] : [];
+      const contents = (APP_STATE.data && APP_STATE.data.contents) || [];
+      contents.forEach(c => {
+        if (normalizeAccount(c.account) === norm && c.pillar) {
+          const p = String(c.pillar).trim();
+          if (p && !base.includes(p)) base.push(p);
+        }
+      });
+      return base;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadDashboard();
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+          ['taskModal', 'ideaModal', 'contentModal', 'seriesModal', 'productModal'].forEach(closeModal);
+        }
+      });
+    });
+
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    function toggleSidebar(open) {
+      document.getElementById('sidebar').classList.toggle('open', open);
+      document.getElementById('sidebarBackdrop').classList.toggle('open', open);
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+
+    function navigateTo(view) {
+      APP_STATE.currentView = view;
+      APP_STATE.contentTab = 'pipeline';
+      APP_STATE.contentFilterStatus = 'ALL';
+      APP_STATE.contentFilterPillar = 'ALL';
+      APP_STATE.contentSearch = '';
+
+      document.querySelectorAll('.nav-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.view === view);
+      });
+      document.getElementById('topbarTitle').textContent = VIEW_TITLES[view] || 'Dashboard';
+      toggleSidebar(false);
+      renderCurrentView();
+    }
+
+    function loadDashboard() {
+      google.script.run
+        .withSuccessHandler(res => {
+          APP_STATE.data = res;
+          document.getElementById('topbarDate').textContent =
+            `${res.dayName}, ${res.todayStr} (Asia/Jakarta)`;
+          populateProductDropdown();
+          renderCurrentView();
+        })
+        .withFailureHandler(err => {
+          document.getElementById('mainContainer').innerHTML =
+            `<div class="card card-alert"><strong>Gagal memuat data:</strong> ${escapeHtml(err.message)}</div>`;
+        })
+        .getDashboardBootstrap();
+    }
+
+    function populateProductDropdown() {
+      const sel = document.getElementById('taskRefId');
+      if (!sel || !APP_STATE.data) return;
+      sel.innerHTML = '<option value="">-- Tidak ada --</option>';
+      (APP_STATE.data.products || []).forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.product_id;
+        opt.textContent = `${p.product_id} - ${p.product_name}`;
+        sel.appendChild(opt);
+      });
+    }
+
+    function renderCurrentView() {
+      if (!APP_STATE.data) return;
+      const container = document.getElementById('mainContainer');
+
+      switch (APP_STATE.currentView) {
+        case 'today':
+          container.innerHTML = renderTodayView();
+          break;
+        case 'ideas':
+          container.innerHTML = renderIdeasView();
+          break;
+        case 'personal':
+          container.innerHTML = renderContentWorkspace('Personal');
+          break;
+        case 'devimpact':
+          container.innerHTML = renderContentWorkspace('Dev.Impact');
+          break;
+        case 'products':
+          container.innerHTML = renderProductsView();
+          break;
+        case 'tasks':
+          container.innerHTML = renderTasksAndCalendarView();
+          break;
+        case 'weekly':
+          container.innerHTML = renderWeeklyReviewView();
+          break;
+        case 'settings':
+          container.innerHTML = renderSettingsView();
+          break;
+      }
+    }
+
+    function getModuleBadge(mod) {
+      const norm = normalizeAccount(mod);
+      if (norm === 'Personal') return '<span class="badge badge-personal">Personal Threads</span>';
+      if (norm === 'Dev.Impact') return '<span class="badge badge-devimpact">Dev.Impact</span>';
+      if (mod === 'Digital Product') return '<span class="badge badge-product">Digital Product</span>';
+      return '<span class="badge badge-general">General</span>';
+    }
+
+    function getPriorityBadge(prio) {
+      if (prio === 'High') return '<span class="badge badge-high">High</span>';
+      if (prio === 'Medium') return '<span class="badge badge-medium">Medium</span>';
+      return '<span class="badge badge-low">Low</span>';
+    }
+
+    function getContentStatusBadge(st) {
+      if (st === 'Published') return '<span class="badge badge-done">Published</span>';
+      if (st === 'Scheduled' || st === 'Ready to Publish') return '<span class="badge badge-product">' + escapeHtml(st) + '</span>';
+      if (st === 'Draft' || st === 'Developing') return '<span class="badge badge-medium">' + escapeHtml(st) + '</span>';
+      return '<span class="badge badge-general">' + escapeHtml(st || 'Idea') + '</span>';
+    }
+
+    function getProductStageBadge(stage) {
+      if (stage === 'Launched') return '<span class="badge badge-done">Launched</span>';
+      if (stage === 'Launch Prep' || stage === 'Editing/Review') return '<span class="badge badge-medium">' + escapeHtml(stage) + '</span>';
+      if (stage === 'Development' || stage === 'Outline') return '<span class="badge badge-product">' + escapeHtml(stage) + '</span>';
+      return '<span class="badge badge-general">' + escapeHtml(stage || 'Idea') + '</span>';
+    }
+
+    /* ==================== TODAY'S FOCUS ==================== */
+
+    function renderTodayView() {
+      const { todayStr, todayRoutines, tasks, products, contents, neglectedIdeasCount } = APP_STATE.data;
+
+      const activeTasks = tasks.filter(t => t.status !== 'Done');
+      const overdueTasks = activeTasks.filter(t => t.due_date && t.due_date < todayStr);
+      const todayTasks = activeTasks.filter(t =>
+        t.due_date === todayStr ||
+        String(t.scheduled_start || '').startsWith(todayStr) ||
+        t.priority === 'High'
+      );
+      const inProgressTasks = tasks.filter(t => t.status === 'In Progress');
+      const scheduledTodayContent = (contents || []).filter(c =>
+        c.status !== 'Published' && String(c.scheduled_at || '').startsWith(todayStr)
+      );
+
+      const routineHtml = todayRoutines.length
+        ? todayRoutines.map(r => `
+            <div class="task-item">
+              <div>
+                <div class="task-title">${escapeHtml(r.activity_name)}</div>
+                <div class="task-meta">
+                  ${getModuleBadge(r.focus_category)}
+                  <span>🕒 ${escapeHtml(r.start_time)} - ${escapeHtml(r.end_time)} WIB</span>
+                </div>
+              </div>
+            </div>
+          `).join('')
+        : '<div class="empty-state">Tidak ada jadwal rutin aktif hari ini.</div>';
+
+      const priorityHtml = todayTasks.length
+        ? todayTasks.slice(0, 6).map(t => renderTaskRow(t, true)).join('')
+        : '<div class="empty-state">Semua prioritas hari ini sudah beres!</div>';
+
+      const overdueHtml = overdueTasks.length
+        ? overdueTasks.map(t => `
+            <div class="task-item">
+              <div>
+                <div class="task-title" style="color:var(--color-danger)">${escapeHtml(t.title)}</div>
+                <div class="task-meta">
+                  ${getModuleBadge(t.module_source)}
+                  <span>Due: ${escapeHtml(t.due_date)}</span>
+                </div>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="openTaskModal('${t.task_id}')">Reschedule</button>
+            </div>
+          `).join('')
+        : '<div class="empty-state">Tidak ada tugas terlambat (overdue).</div>';
+
+      const productsHtml = products.map(p => `
+        <div style="margin-bottom:12px; cursor:pointer;" onclick="navigateTo('products')">
+          <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600;">
+            <span>${escapeHtml(p.product_name)}</span>
+            <span>${Number(p.progress_pct) || 0}% (${escapeHtml(p.stage)})</span>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-fill" style="width:${Number(p.progress_pct) || 0}%"></div>
+          </div>
+        </div>
+      `).join('') || '<div class="empty-state">Belum ada produk digital aktif.</div>';
+
+      return `
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⚡ Quick Idea Capture</div>
+            <button class="btn btn-secondary btn-sm" onclick="navigateTo('ideas')">Buka Idea Bank (${(APP_STATE.data.ideas || []).length}) →</button>
+          </div>
+          <form class="quick-bar" onsubmit="handleQuickIdea(event)">
+            <input type="text" class="input" id="quickIdeaTitle" placeholder="Tulis ide konten, riset, atau produk digital..." required>
+            <select class="select" id="quickIdeaCategory">
+              <option value="Personal Threads">Personal Threads</option>
+              <option value="Dev.Impact">Dev.Impact</option>
+              <option value="Digital Product">Digital Product</option>
+              <option value="General">General</option>
+            </select>
+            <button type="submit" class="btn btn-primary" id="btnQuickIdea">Simpan Ide</button>
+          </form>
+        </div>
+
+        <div class="section-label">1. What Should I Do Today?</div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Fokus Jadwal & Konten Hari Ini</div>
+              <button class="btn btn-secondary btn-sm" onclick="navigateTo('tasks')">Kalender →</button>
+            </div>
+            ${routineHtml}
+            ${scheduledTodayContent.length ? `
+              <div style="border-top:1px solid var(--border); margin-top:8px; padding-top:8px;">
+                <div style="font-size:11.5px; font-weight:700; color:var(--text-secondary);">Konten Terjadwal Hari Ini:</div>
+                ${scheduledTodayContent.map(c => `
+                  <div class="task-item">
+                    <div>
+                      <div class="task-title">${escapeHtml(c.hook)}</div>
+                      <div class="task-meta">${getModuleBadge(c.account)} <span>🕒 ${escapeHtml(c.scheduled_at)}</span></div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="openContentModal('${normalizeAccount(c.account)}', '${c.content_id}')">Buka</button>
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Prioritas Tugas Hari Ini (${todayTasks.length})</div>
+              <button class="btn btn-secondary btn-sm" onclick="APP_STATE.taskTab='list'; navigateTo('tasks');">Semua Tugas →</button>
+            </div>
+            ${priorityHtml}
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <div class="section-label">2. What Is Currently In Progress?</div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Progres Produk & Tugas Berjalan</div>
+                <button class="btn btn-secondary btn-sm" onclick="navigateTo('products')">Kelola Produk →</button>
+              </div>
+              ${productsHtml}
+              <div style="border-top:1px solid var(--border); padding-top:10px; margin-top:8px;">
+                <div style="font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:6px;">
+                  Tugas In Progress (${inProgressTasks.length})
+                </div>
+                ${inProgressTasks.length
+                  ? inProgressTasks.map(t => renderTaskRow(t, true)).join('')
+                  : '<div class="empty-state">Belum ada tugas berstatus In Progress.</div>'}
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="section-label">3. What Am I Neglecting?</div>
+            <div class="card ${overdueTasks.length || neglectedIdeasCount ? 'card-alert' : ''}">
+              <div class="card-header">
+                <div class="card-title">Perhatian & Keterlambatan</div>
+                <button class="btn btn-secondary btn-sm" onclick="navigateTo('weekly')">Weekly Review →</button>
+              </div>
+              <div style="padding:8px 12px; background:var(--surface-muted); border-radius:7px; margin-bottom:10px; font-size:13px; display:flex; justify-content:space-between; align-items:center;">
+                <span>💡 <strong>${neglectedIdeasCount} ide</strong> &gt; 7 hari belum diolah.</span>
+                <button class="btn btn-secondary btn-sm" onclick="navigateTo('ideas')">Tinjau</button>
+              </div>
+              ${overdueHtml}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    /* ==================== MODULE 1: IDEA MANAGEMENT ==================== */
+
+    function renderIdeasView() {
+      const ideas = APP_STATE.data.ideas || [];
+      const nowMs = Date.now();
+      const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+
+      const filtered = ideas.filter(item => {
+        const mCat = APP_STATE.ideaFilterCat === 'ALL' || item.category === APP_STATE.ideaFilterCat;
+        const mStat = APP_STATE.ideaFilterStatus === 'ALL' || item.status === APP_STATE.ideaFilterStatus;
+        const mPrio = APP_STATE.ideaFilterPrio === 'ALL' || item.priority === APP_STATE.ideaFilterPrio;
+        const q = APP_STATE.ideaSearch.toLowerCase();
+        const mQ = !q ||
+          String(item.title).toLowerCase().includes(q) ||
+          String(item.raw_notes).toLowerCase().includes(q) ||
+          String(item.idea_id).toLowerCase().includes(q);
+        return mCat && mStat && mPrio && mQ;
+      });
+
+      const listHtml = filtered.length ? filtered.map(item => {
+        let isNeglected = false;
+        if ((item.status === 'New Idea' || item.status === 'Under Review') && item.created_at) {
+          const d = new Date(String(item.created_at).replace(' ', 'T'));
+          if (!isNaN(d.getTime()) && (nowMs - d.getTime() > sevenDaysMs)) isNeglected = true;
+        }
+
+        return `
+          <div class="task-item" style="flex-wrap:wrap;">
+            <div style="flex:1; min-width:260px;">
+              <div class="task-title">
+                <span style="color:var(--text-muted); font-size:12px;">${escapeHtml(item.idea_id)}</span> —
+                ${escapeHtml(item.title)}
+              </div>
+              <div class="task-meta">
+                ${getModuleBadge(item.category)}
+                ${getPriorityBadge(item.priority)}
+                <span class="badge badge-general">${escapeHtml(item.status)}</span>
+                <span>Sumber: ${escapeHtml(item.source)}</span>
+                <span>📅 ${escapeHtml(item.created_at)}</span>
+                ${isNeglected ? '<span class="badge badge-high">! Terabaikan &gt;7 hari</span>' : ''}
+                ${item.converted_ref_id ? `<span class="badge badge-done">→ ${escapeHtml(item.converted_ref_id)}</span>` : ''}
+              </div>
+              ${item.raw_notes ? `<div class="snippet-box">${escapeHtml(item.raw_notes)}</div>` : ''}
+              ${item.ai_notes ? `<div class="snippet-box" style="border-left:3px solid var(--color-product);"><strong>AI Notes:</strong> ${escapeHtml(item.ai_notes)}</div>` : ''}
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button class="btn btn-primary btn-sm" onclick="openIdeaModal('${item.idea_id}')">🤖 AI & Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="handleDeleteIdea('${item.idea_id}')">Hapus</button>
+              </div>
+              <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                <button class="btn btn-secondary btn-sm" onclick="handleConvertIdea('${item.idea_id}', 'Personal Threads')">→ Personal</button>
+                <button class="btn btn-secondary btn-sm" onclick="handleConvertIdea('${item.idea_id}', 'Dev.Impact')">→ Dev.Impact</button>
+                <button class="btn btn-secondary btn-sm" onclick="handleConvertIdea('${item.idea_id}', 'Task')">→ Task</button>
+                <button class="btn btn-secondary btn-sm" onclick="handleConvertIdea('${item.idea_id}', 'Digital Product')">→ Produk</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('') : '<div class="empty-state">Tidak ada ide yang cocok dengan filter saat ini.</div>';
+
+      return `
+        <div class="card">
+          <div class="quick-bar">
+            <input type="text" class="input" placeholder="Cari judul ide, catatan, atau ID..."
+              value="${escapeHtml(APP_STATE.ideaSearch)}"
+              oninput="APP_STATE.ideaSearch=this.value; renderCurrentView();">
+
+            <select class="select" onchange="APP_STATE.ideaFilterCat=this.value; renderCurrentView();">
+              <option value="ALL" ${APP_STATE.ideaFilterCat==='ALL'?'selected':''}>Semua Kategori</option>
+              <option value="Personal Threads" ${APP_STATE.ideaFilterCat==='Personal Threads'?'selected':''}>Personal Threads</option>
+              <option value="Dev.Impact" ${APP_STATE.ideaFilterCat==='Dev.Impact'?'selected':''}>Dev.Impact</option>
+              <option value="Digital Product" ${APP_STATE.ideaFilterCat==='Digital Product'?'selected':''}>Digital Product</option>
+              <option value="General" ${APP_STATE.ideaFilterCat==='General'?'selected':''}>General</option>
+            </select>
+
+            <select class="select" onchange="APP_STATE.ideaFilterStatus=this.value; renderCurrentView();">
+              <option value="ALL" ${APP_STATE.ideaFilterStatus==='ALL'?'selected':''}>Semua Status</option>
+              <option value="New Idea" ${APP_STATE.ideaFilterStatus==='New Idea'?'selected':''}>New Idea</option>
+              <option value="Under Review" ${APP_STATE.ideaFilterStatus==='Under Review'?'selected':''}>Under Review</option>
+              <option value="Developed" ${APP_STATE.ideaFilterStatus==='Developed'?'selected':''}>Developed</option>
+              <option value="Converted to Task" ${APP_STATE.ideaFilterStatus==='Converted to Task'?'selected':''}>Converted to Task</option>
+              <option value="Archived" ${APP_STATE.ideaFilterStatus==='Archived'?'selected':''}>Archived</option>
+            </select>
+
+            <select class="select" onchange="APP_STATE.ideaFilterPrio=this.value; renderCurrentView();">
+              <option value="ALL" ${APP_STATE.ideaFilterPrio==='ALL'?'selected':''}>Semua Prioritas</option>
+              <option value="High" ${APP_STATE.ideaFilterPrio==='High'?'selected':''}>High</option>
+              <option value="Medium" ${APP_STATE.ideaFilterPrio==='Medium'?'selected':''}>Medium</option>
+              <option value="Low" ${APP_STATE.ideaFilterPrio==='Low'?'selected':''}>Low</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Central Idea Bank (${filtered.length} dari ${ideas.length} ide)</div>
+            <button class="btn btn-primary btn-sm" onclick="openIdeaModal()">+ Tambah Ide Baru</button>
+          </div>
+          ${listHtml}
+        </div>
+      `;
+    }
+
+    /* ==================== MODULE 2: CONTENT MANAGEMENT ==================== */
+
+    function renderContentWorkspace(account) {
+      const cfg = ACCOUNT_CONFIG[account];
+      const allContents = (APP_STATE.data.contents || []).filter(c => normalizeAccount(c.account) === account);
+      const dynamicPillars = getAccountPillars(account);
+
+      const pillarOptions = dynamicPillars.map(p =>
+        `<option value="${escapeHtml(p)}" ${APP_STATE.contentFilterPillar===p?'selected':''}>${escapeHtml(p)}</option>`
+      ).join('');
+
+      let bodyHtml = '';
+
+      if (APP_STATE.contentTab === 'pipeline') {
+        const filtered = allContents.filter(c => {
+          const mStat = APP_STATE.contentFilterStatus === 'ALL' || c.status === APP_STATE.contentFilterStatus;
+          const mPil = APP_STATE.contentFilterPillar === 'ALL' || String(c.pillar).trim() === APP_STATE.contentFilterPillar;
+          const q = APP_STATE.contentSearch.toLowerCase();
+          const mQ = !q ||
+            String(c.hook).toLowerCase().includes(q) ||
+            String(c.body_draft).toLowerCase().includes(q) ||
+            String(c.series_id).toLowerCase().includes(q) ||
+            String(c.content_id).toLowerCase().includes(q);
+          return mStat && mPil && mQ;
+        });
+
+        const itemsHtml = filtered.length ? filtered.map(c => `
+          <div class="task-item" style="flex-wrap:wrap;">
+            <div style="flex:1; min-width:250px;">
+              <div class="task-title">
+                <span style="color:var(--text-muted); font-size:12px;">${escapeHtml(c.content_id)}</span> —
+                ${escapeHtml(c.hook || '(Tanpa hook)')}
+              </div>
+              <div class="task-meta">
+                ${getContentStatusBadge(c.status)}
+                <span class="badge ${cfg.badgeClass}">${escapeHtml(c.pillar)}</span>
+                ${c.input_mode ? `<span class="badge badge-general">${escapeHtml(c.input_mode)}</span>` : ''}
+                ${c.series_id ? `<span class="badge badge-series">Series: ${escapeHtml(c.series_id)} #${escapeHtml(c.series_order)}</span>` : ''}
+                ${c.scheduled_at ? `<span>🕒 Jadwal: ${escapeHtml(c.scheduled_at)}</span>` : ''}
+                ${c.outlook_event_id ? `<span class="badge badge-done">📅 Synced</span>` : ''}
+              </div>
+              ${c.body_draft ? `<div class="snippet-box">${escapeHtml(c.body_draft)}</div>` : ''}
+            </div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap; flex-shrink:0;">
+              ${c.scheduled_at ? `<button class="btn btn-secondary btn-sm" onclick="handleSyncContentCalendar('${c.content_id}')">📅 Sync GCal</button>` : ''}
+              <button class="btn btn-primary btn-sm" onclick="openContentModal('${account}', '${c.content_id}')">Edit & AI Studio</button>
+              <button class="btn btn-danger btn-sm" onclick="handleDeleteContent('${c.content_id}')">Hapus</button>
+            </div>
+          </div>
+        `).join('') : '<div class="empty-state">Belum ada konten pada filter ini. Klik "+ Buat Konten" atau konversi dari Idea Bank.</div>';
+
+        bodyHtml = `
+          <div class="quick-bar" style="margin-bottom:14px;">
+            <input type="text" class="input" placeholder="Cari hook, isi draf, Series ID, atau ID..."
+              value="${escapeHtml(APP_STATE.contentSearch)}"
+              oninput="APP_STATE.contentSearch=this.value; renderCurrentView();">
+
+            <select class="select" onchange="APP_STATE.contentFilterPillar=this.value; renderCurrentView();">
+              <option value="ALL" ${APP_STATE.contentFilterPillar==='ALL'?'selected':''}>Semua Pilar</option>
+              ${pillarOptions}
+            </select>
+
+            <select class="select" onchange="APP_STATE.contentFilterStatus=this.value; renderCurrentView();">
+              <option value="ALL" ${APP_STATE.contentFilterStatus==='ALL'?'selected':''}>Semua Status</option>
+              <option value="Idea" ${APP_STATE.contentFilterStatus==='Idea'?'selected':''}>Idea</option>
+              <option value="Developing" ${APP_STATE.contentFilterStatus==='Developing'?'selected':''}>Developing</option>
+              <option value="Draft" ${APP_STATE.contentFilterStatus==='Draft'?'selected':''}>Draft</option>
+              <option value="Ready to Publish" ${APP_STATE.contentFilterStatus==='Ready to Publish'?'selected':''}>Ready to Publish</option>
+              <option value="Scheduled" ${APP_STATE.contentFilterStatus==='Scheduled'?'selected':''}>Scheduled</option>
+              <option value="Published" ${APP_STATE.contentFilterStatus==='Published'?'selected':''}>Published</option>
+              <option value="Archived" ${APP_STATE.contentFilterStatus==='Archived'?'selected':''}>Archived</option>
+            </select>
+          </div>
+          ${itemsHtml}
+        `;
+      } else if (APP_STATE.contentTab === 'calendar') {
+        const scheduledOrPub = allContents
+          .filter(c => c.scheduled_at || c.status === 'Scheduled' || c.status === 'Published')
+          .sort((a, b) => String(a.scheduled_at || '').localeCompare(String(b.scheduled_at || '')));
+
+        bodyHtml = scheduledOrPub.length ? scheduledOrPub.map(c => `
+          <div class="task-item" style="flex-wrap:wrap;">
+            <div style="flex:1; min-width:250px;">
+              <div class="task-title">
+                📅 ${escapeHtml(c.scheduled_at || 'Belum dijadwalkan')} — ${escapeHtml(c.hook)}
+              </div>
+              <div class="task-meta">
+                ${getContentStatusBadge(c.status)}
+                <span class="badge ${cfg.badgeClass}">${escapeHtml(c.pillar)}</span>
+                ${c.outlook_event_id ? `<span class="badge badge-done">📅 Synced</span>` : ''}
+                ${c.perf_metrics ? `<span>📊 ${escapeHtml(c.perf_metrics)}</span>` : ''}
+                ${c.post_url ? `<a href="${escapeHtml(c.post_url)}" target="_blank" rel="noopener">Lihat Post ↗</a>` : ''}
+              </div>
+            </div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              ${c.scheduled_at ? `<button class="btn btn-secondary btn-sm" onclick="handleSyncContentCalendar('${c.content_id}')">📅 Sync GCal</button>` : ''}
+              ${c.scheduled_at ? `<button class="btn btn-secondary btn-sm" onclick="downloadSingleContentIcs('${c.content_id}')">📥 .ICS</button>` : ''}
+              <button class="btn btn-secondary btn-sm" onclick="openContentModal('${account}', '${c.content_id}')">Atur Jadwal / Metrik</button>
+            </div>
+          </div>
+        `).join('') : '<div class="empty-state">Belum ada konten terjadwal atau terbit untuk akun ini.</div>';
+      } else if (APP_STATE.contentTab === 'series') {
+        const seriesMap = {};
+        allContents.filter(c => c.series_id).forEach(c => {
+          if (!seriesMap[c.series_id]) seriesMap[c.series_id] = [];
+          seriesMap[c.series_id].push(c);
+        });
+
+        const seriesKeys = Object.keys(seriesMap);
+        bodyHtml = seriesKeys.length ? seriesKeys.map(sId => {
+          const items = seriesMap[sId].sort((a, b) => (Number(a.series_order) || 0) - (Number(b.series_order) || 0));
+          return `
+            <div style="border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:12px; background:var(--bg-app);">
+              <div style="font-weight:700; margin-bottom:8px;">
+                📚 Series ${escapeHtml(sId)} (${items.length} bagian)
+              </div>
+              ${items.map(it => `
+                <div class="task-item" style="background:var(--surface); padding:8px 10px; border-radius:6px; margin-bottom:6px; border:1px solid var(--border);">
+                  <div>
+                    <div class="task-title">Part ${escapeHtml(it.series_order)}: ${escapeHtml(it.hook)}</div>
+                    <div class="task-meta">
+                      ${getContentStatusBadge(it.status)}
+                      ${it.scheduled_at ? `<span>🕒 ${escapeHtml(it.scheduled_at)}</span>` : '<span>Belum dijadwalkan</span>'}
+                    </div>
+                  </div>
+                  <button class="btn btn-secondary btn-sm" onclick="openContentModal('${account}', '${it.content_id}')">Edit Part</button>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }).join('') : '<div class="empty-state">Belum ada Content Series. Klik "+ Buat Content Series" untuk memecah topik menjadi seri multi-hari.</div>';
+      }
+
+      return `
+        <div class="card ${cfg.cardClass}">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${cfg.title}</div>
+              <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">${cfg.positioning}</div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn btn-secondary btn-sm" onclick="openSeriesModal('${account}')">+ Buat Content Series</button>
+              <button class="btn ${cfg.btnClass} btn-sm" onclick="openContentModal('${account}')">+ Buat Konten</button>
+            </div>
+          </div>
+          <div style="font-size:12px; color:var(--text-secondary); background:var(--bg-app); padding:8px 12px; border-radius:7px;">
+            <strong>Pilar Konten:</strong> ${dynamicPillars.join(' • ')}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="subtabs">
+            <button class="btn-chip ${APP_STATE.contentTab==='pipeline'?'active':''}" onclick="APP_STATE.contentTab='pipeline'; renderCurrentView();">
+              Content Bank & Draf (${allContents.length})
+            </button>
+            <button class="btn-chip ${APP_STATE.contentTab==='calendar'?'active':''}" onclick="APP_STATE.contentTab='calendar'; renderCurrentView();">
+              Editorial Calendar & Performa
+            </button>
+            <button class="btn-chip ${APP_STATE.contentTab==='series'?'active':''}" onclick="APP_STATE.contentTab='series'; renderCurrentView();">
+              Content Series Manager
+            </button>
+          </div>
+          ${bodyHtml}
+        </div>
+      `;
+    }
+
+    /* ==================== MODULE 3: DIGITAL PRODUCTS PORTFOLIO ==================== */
+
+    function renderProductsView() {
+      const products = APP_STATE.data.products || [];
+      const tasks = APP_STATE.data.tasks || [];
+
+      const activeCount = products.filter(p => (p.completion_status || 'Active') === 'Active').length;
+      const launchedCount = products.filter(p => p.stage === 'Launched' || p.completion_status === 'Completed').length;
+      const avgProgress = products.length
+        ? Math.round(products.reduce((acc, p) => acc + (Number(p.progress_pct) || 0), 0) / products.length)
+        : 0;
+      const productTasks = tasks.filter(t => t.module_source === 'Digital Product' || String(t.ref_id || '').startsWith('PRD-'));
+      const openProductTasks = productTasks.filter(t => t.status !== 'Done').length;
+
+      const filtered = products.filter(p => {
+        const mStage = APP_STATE.productFilterStage === 'ALL' || p.stage === APP_STATE.productFilterStage;
+        const mStat = APP_STATE.productFilterStatus === 'ALL' || (p.completion_status || 'Active') === APP_STATE.productFilterStatus;
+        const q = APP_STATE.productSearch.toLowerCase();
+        const mQ = !q ||
+          String(p.product_name).toLowerCase().includes(q) ||
+          String(p.product_id).toLowerCase().includes(q) ||
+          String(p.description).toLowerCase().includes(q) ||
+          String(p.target_audience).toLowerCase().includes(q);
+        return mStage && mStat && mQ;
+      });
+
+      const cardsHtml = filtered.length ? filtered.map(p => {
+        const linkedTasks = tasks.filter(t => String(t.ref_id) === String(p.product_id));
+        const doneLinked = linkedTasks.filter(t => t.status === 'Done').length;
+        const pct = Number(p.progress_pct) || 0;
+
+        const linkedTasksHtml = linkedTasks.length
+          ? linkedTasks.map(t => `
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 0; border-bottom:1px solid var(--border);">
+                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12.5px; flex:1;">
+                  <input type="checkbox" ${t.status === 'Done' ? 'checked' : ''} onchange="handleToggleTask('${t.task_id}', this.checked)">
+                  <span style="${t.status === 'Done' ? 'text-decoration:line-through; color:var(--text-muted);' : ''}">
+                    ${t.is_milestone ? '🏁 ' : ''}${escapeHtml(t.title)}
+                  </span>
+                </label>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  ${t.due_date ? `<span style="font-size:11px; color:var(--text-secondary);">📅 ${escapeHtml(t.due_date)}</span>` : ''}
+                  <button class="btn btn-secondary btn-sm" style="padding:2px 7px; font-size:11px;" onclick="openTaskModal('${t.task_id}')">Edit</button>
+                </div>
+              </div>
+            `).join('')
+          : '<div style="font-size:12px; color:var(--text-muted); padding:6px 0;">Belum ada milestone/tugas tertaut ke produk ini.</div>';
+
+        return `
+          <div class="card card-product">
+            <div class="card-header">
+              <div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <span style="color:var(--text-muted); font-size:12px; font-weight:700;">${escapeHtml(p.product_id)}</span>
+                  <span class="card-title" style="font-size:16px;">${escapeHtml(p.product_name)}</span>
+                  <span class="badge badge-product">${escapeHtml(p.product_type || 'Ebook')}</span>
+                  ${getProductStageBadge(p.stage)}
+                  <span class="badge badge-general">${escapeHtml(p.completion_status || 'Active')}</span>
+                </div>
+                <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">
+                  ${p.launch_target ? `🎯 Target Rilis: <strong>${escapeHtml(p.launch_target)}</strong> • ` : ''}
+                  Dibuat: ${escapeHtml(p.created_at || '-')}
+                </div>
+              </div>
+
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                ${p.onedrive_url ? `<a href="${escapeHtml(p.onedrive_url)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">📁 Folder Kerja ↗</a>` : ''}
+                <button class="btn btn-product btn-sm" onclick="openProductModal('${p.product_id}')">🚀 Edit & AI Strategist</button>
+                <button class="btn btn-danger btn-sm" onclick="handleDeleteProduct('${p.product_id}')">Hapus</button>
+              </div>
+            </div>
+
+            <div style="margin:10px 0;">
+              <div style="display:flex; justify-content:space-between; align-items:center; font-size:12.5px; font-weight:600;">
+                <span>Progres Penyelesaian: <strong>${pct}%</strong></span>
+                <div style="display:flex; gap:6px;">
+                  ${linkedTasks.length > 0 ? `<button class="btn btn-secondary btn-sm" style="padding:2px 8px; font-size:11px;" onclick="handleSyncProductProgress('${p.product_id}')">↻ Sync % dari Task (${doneLinked}/${linkedTasks.length})</button>` : ''}
+                </div>
+              </div>
+              <div class="progress-wrap">
+                <div class="progress-fill" style="width:${pct}%"></div>
+              </div>
+            </div>
+
+            ${(p.target_audience || p.value_proposition || p.description) ? `
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:10px; margin-top:10px; font-size:12.5px;">
+                ${p.target_audience ? `<div style="background:var(--bg-app); padding:8px 10px; border-radius:6px;"><strong>Target Audiens:</strong><br>${escapeHtml(p.target_audience)}</div>` : ''}
+                ${p.value_proposition ? `<div style="background:var(--bg-app); padding:8px 10px; border-radius:6px;"><strong>Value Proposition:</strong><br>${escapeHtml(p.value_proposition)}</div>` : ''}
+              </div>
+              ${p.description ? `<div class="snippet-box">${escapeHtml(p.description)}</div>` : ''}
+            ` : ''}
+
+            <div class="milestone-panel">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+                <span style="font-size:12px; font-weight:700; color:var(--text-primary);">
+                  🏁 Milestones & Tugas Produksi (${doneLinked}/${linkedTasks.length} selesai)
+                </span>
+                <div style="display:flex; gap:6px;">
+                  ${linkedTasks.length === 0 ? `<button class="btn btn-secondary btn-sm" style="padding:3px 9px; font-size:11.5px;" onclick="handleGenerateProductTasks('${p.product_id}')">⚡ Generate 5 Starter Milestones</button>` : ''}
+                  <button class="btn btn-primary btn-sm" style="padding:3px 9px; font-size:11.5px;" onclick="openTaskForProduct('${p.product_id}')">+ Tambah Milestone</button>
+                </div>
+              </div>
+              ${linkedTasksHtml}
+            </div>
+          </div>
+        `;
+      }).join('') : '<div class="card"><div class="empty-state">Belum ada produk digital pada filter ini. Klik "+ Buat Produk Baru" untuk memulai.</div></div>';
+
+      return `
+        <div class="grid-4">
+          <div class="kpi-box">
+            <div class="kpi-label">Produk Aktif</div>
+            <div class="kpi-value">${activeCount}</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-label">Rata-rata Progres</div>
+            <div class="kpi-value" style="color:var(--color-product);">${avgProgress}%</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-label">Produk Launched</div>
+            <div class="kpi-value" style="color:var(--color-success);">${launchedCount}</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-label">Milestone Terbuka</div>
+            <div class="kpi-value">${openProductTasks}</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="quick-bar">
+            <input type="text" class="input" placeholder="Cari nama produk, audiens, atau ID..."
+              value="${escapeHtml(APP_STATE.productSearch)}"
+              oninput="APP_STATE.productSearch=this.value; renderCurrentView();">
+
+            <select class="select" onchange="APP_STATE.productFilterStage=this.value; renderCurrentView();">
+              <option value="ALL" ${APP_STATE.productFilterStage==='ALL'?'selected':''}>Semua Tahap (Stage)</option>
+              <option value="Idea" ${APP_STATE.productFilterStage==='Idea'?'selected':''}>Idea</option>
+              <option value="Validation" ${APP_STATE.productFilterStage==='Validation'?'selected':''}>Validation</option>
+              <option value="Outline" ${APP_STATE.productFilterStage==='Outline'?'selected':''}>Outline</option>
+              <option value="Development" ${APP_STATE.productFilterStage==='Development'?'selected':''}>Development</option>
+              <option value="Editing/Review" ${APP_STATE.productFilterStage==='Editing/Review'?'selected':''}>Editing/Review</option>
+              <option value="Launch Prep" ${APP_STATE.productFilterStage==='Launch Prep'?'selected':''}>Launch Prep</option>
+              <option value="Launched" ${APP_STATE.productFilterStage==='Launched'?'selected':''}>Launched</option>
+            </select>
+
+            <select class="select" onchange="APP_STATE.productFilterStatus=this.value; renderCurrentView();">
+              <option value="ALL" ${APP_STATE.productFilterStatus==='ALL'?'selected':''}>Semua Status</option>
+              <option value="Active" ${APP_STATE.productFilterStatus==='Active'?'selected':''}>Active</option>
+              <option value="On Hold" ${APP_STATE.productFilterStatus==='On Hold'?'selected':''}>On Hold</option>
+              <option value="Completed" ${APP_STATE.productFilterStatus==='Completed'?'selected':''}>Completed</option>
+              <option value="Archived" ${APP_STATE.productFilterStatus==='Archived'?'selected':''}>Archived</option>
+            </select>
+
+            <button class="btn btn-product btn-sm" onclick="openProductModal()">+ Buat Produk Baru</button>
+          </div>
+        </div>
+
+        ${cardsHtml}
+      `;
+    }
+
+    /* ==================== MODULE 4: UNIFIED CALENDAR & TASKS ==================== */
+
+    function getSevenDayWindow(todayStr) {
+      const days = [];
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const shortNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+      const base = new Date(todayStr + 'T12:00:00');
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(base.getTime() + i * 24 * 60 * 60 * 1000);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const dateStr = `${yyyy}-${mm}-${dd}`;
+        const dow = d.getDay();
+        days.push({
+          dateStr: dateStr,
+          dayName: dayNames[dow],
+          label: `${shortNames[dow]}, ${dd}/${mm}`,
+          isToday: i === 0
+        });
+      }
+      return days;
+    }
+
+    function renderTasksAndCalendarView() {
+      const { todayStr, allRoutines, tasks, contents, products } = APP_STATE.data;
+      const days = getSevenDayWindow(todayStr);
+
+      let tabContentHtml = '';
+
+      if (APP_STATE.taskTab === 'calendar') {
+        const weekColsHtml = days.map(day => {
+          const dayRoutines = (allRoutines || []).filter(r =>
+            String(r.day_of_week).toLowerCase() === day.dayName.toLowerCase() &&
+            (r.is_active === true || String(r.is_active).toUpperCase() === 'TRUE')
+          );
+
+          const dayTasks = (tasks || []).filter(t =>
+            t.status !== 'Done' &&
+            (String(t.scheduled_start || '').startsWith(day.dateStr) || (!t.scheduled_start && t.due_date === day.dateStr))
+          );
+
+          const dayContents = (contents || []).filter(c =>
+            c.status !== 'Published' && String(c.scheduled_at || '').startsWith(day.dateStr)
+          );
+
+          const dayLaunches = (products || []).filter(p => p.launch_target === day.dateStr);
+
+          const pillClassForMod = mod => {
+            const norm = normalizeAccount(mod);
+            if (norm === 'Personal') return 'personal';
+            if (norm === 'Dev.Impact') return 'devimpact';
+            if (mod === 'Digital Product') return 'product';
+            return '';
+          };
+
+          const itemsHtml = [
+            ...dayRoutines.map(r => `
+              <div class="cal-pill ${pillClassForMod(r.focus_category)}" style="background:#F8FAFC;">
+                <div style="font-weight:700; color:var(--text-secondary);">🔁 ${escapeHtml(r.start_time)}-${escapeHtml(r.end_time)}</div>
+                <div>${escapeHtml(r.activity_name)}</div>
+              </div>
+            `),
+            ...dayTasks.map(t => `
+              <div class="cal-pill ${pillClassForMod(t.module_source)}" style="cursor:pointer;" onclick="openTaskModal('${t.task_id}')">
+                <div style="font-weight:700;">
+                  ${t.scheduled_start ? '🕒 ' + escapeHtml(t.scheduled_start.slice(11, 16)) : '📌 Due'}
+                  ${t.outlook_event_id ? ' ✅' : ''}
+                </div>
+                <div>${escapeHtml(t.title)}</div>
+              </div>
+            `),
+            ...dayContents.map(c => `
+              <div class="cal-pill ${pillClassForMod(c.account)}" style="cursor:pointer;" onclick="openContentModal('${normalizeAccount(c.account)}', '${c.content_id}')">
+                <div style="font-weight:700;">✍️ ${escapeHtml(String(c.scheduled_at).slice(11, 16))} (${escapeHtml(c.account)})</div>
+                <div>${escapeHtml(c.hook)}</div>
+              </div>
+            `),
+            ...dayLaunches.map(p => `
+              <div class="cal-pill product" style="cursor:pointer;" onclick="navigateTo('products')">
+                <div style="font-weight:700;">🚀 TARGET RILIS</div>
+                <div>${escapeHtml(p.product_name)}</div>
+              </div>
+            `)
+          ].join('');
+
+          return `
+            <div class="day-col ${day.isToday ? 'today' : ''}">
+              <div class="day-col-header">${day.label} ${day.isToday ? '(Hari Ini)' : ''}</div>
+              ${itemsHtml || '<div style="font-size:11px; color:var(--text-muted);">Kosong</div>'}
+            </div>
+          `;
+        }).join('');
+
+        tabContentHtml = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+            <div style="font-size:12.5px; color:var(--text-secondary);">
+              Klik kartu tugas atau konten di bawah untuk mengedit blok waktu, atau gunakan tombol sinkronisasi kalender.
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn btn-secondary btn-sm" onclick="downloadWeeklyCalendarIcs()">📥 Download .ICS (Outlook / Apple)</button>
+              <button class="btn btn-primary btn-sm" id="btnSyncAllGcal" onclick="handleSyncAllGoogleCalendar()">📅 Sync Semua ke Google Calendar</button>
+            </div>
+          </div>
+          <div class="week-grid">${weekColsHtml}</div>
+        `;
+      } else {
+        const filtered = (tasks || []).filter(t => {
+          const matchMod = APP_STATE.taskFilterModule === 'ALL' || t.module_source === APP_STATE.taskFilterModule;
+          const matchStat = APP_STATE.taskFilterStatus === 'ALL' || t.status === APP_STATE.taskFilterStatus;
+          const q = APP_STATE.taskSearch.toLowerCase();
+          const matchQ = !q ||
+            String(t.title).toLowerCase().includes(q) ||
+            String(t.task_id).toLowerCase().includes(q) ||
+            String(t.ref_id).toLowerCase().includes(q);
+          return matchMod && matchStat && matchQ;
+        });
+
+        tabContentHtml = `
+          <div class="quick-bar" style="margin-bottom:14px;">
+            <input type="text" class="input" placeholder="Cari tugas, Ref ID, atau Task ID..."
+              value="${escapeHtml(APP_STATE.taskSearch)}"
+              oninput="APP_STATE.taskSearch=this.value; renderCurrentView();">
+            <select class="select" onchange="APP_STATE.taskFilterModule=this.value; renderCurrentView();">
+              <option value="ALL" ${APP_STATE.taskFilterModule==='ALL'?'selected':''}>Semua Modul</option>
+              <option value="Personal Threads" ${APP_STATE.taskFilterModule==='Personal Threads'?'selected':''}>Personal Threads</option>
+              <option value="Dev.Impact" ${APP_STATE.taskFilterModule==='Dev.Impact'?'selected':''}>Dev.Impact</option>
+              <option value="Digital Product" ${APP_STATE.taskFilterModule==='Digital Product'?'selected':''}>Digital Product</option>
+              <option value="General" ${APP_STATE.taskFilterModule==='General'?'selected':''}>General</option>
+            </select>
+            <select class="select" onchange="APP_STATE.taskFilterStatus=this.value; renderCurrentView();">
+              <option value="ALL" ${APP_STATE.taskFilterStatus==='ALL'?'selected':''}>Semua Status</option>
+              <option value="To Do" ${APP_STATE.taskFilterStatus==='To Do'?'selected':''}>To Do</option>
+              <option value="In Progress" ${APP_STATE.taskFilterStatus==='In Progress'?'selected':''}>In Progress</option>
+              <option value="Blocked" ${APP_STATE.taskFilterStatus==='Blocked'?'selected':''}>Blocked</option>
+              <option value="Done" ${APP_STATE.taskFilterStatus==='Done'?'selected':''}>Done</option>
+            </select>
+          </div>
+          ${filtered.length
+            ? filtered.map(t => renderTaskRow(t, false)).join('')
+            : '<div class="empty-state">Tidak ada tugas yang sesuai filter.</div>'}
+        `;
+      }
+
+      return `
+        <div class="card">
+          <div class="card-header">
+            <div class="subtabs" style="border-bottom:none; padding-bottom:0; margin-bottom:0;">
+              <button class="btn-chip ${APP_STATE.taskTab==='calendar'?'active':''}" onclick="APP_STATE.taskTab='calendar'; renderCurrentView();">
+                🗓️ Unified 7-Day Agenda & Time-Blocks
+              </button>
+              <button class="btn-chip ${APP_STATE.taskTab==='list'?'active':''}" onclick="APP_STATE.taskTab='list'; renderCurrentView();">
+                ✅ Master Task List (${(tasks || []).length})
+              </button>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ Tambah Tugas / Time-Block</button>
+          </div>
+          <div style="border-top:1px solid var(--border); padding-top:14px;">
+            ${tabContentHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderTaskRow(t, compact) {
+      const isDone = t.status === 'Done';
+      const hasCalTime = Boolean(t.scheduled_start || t.due_date);
+      return `
+        <div class="task-item" style="flex-wrap:wrap;">
+          <div class="task-left">
+            <input type="checkbox" class="task-checkbox" ${isDone ? 'checked' : ''}
+              onchange="handleToggleTask('${t.task_id}', this.checked)">
+            <div style="min-width:0;">
+              <div class="task-title ${isDone ? 'done' : ''}">
+                ${t.is_milestone ? '🏁 ' : ''}${escapeHtml(t.title)}
+              </div>
+              <div class="task-meta">
+                ${getModuleBadge(t.module_source)}
+                ${getPriorityBadge(t.priority)}
+                <span>Status: <strong>${escapeHtml(t.status)}</strong></span>
+                ${t.due_date ? `<span>📅 Due: ${escapeHtml(t.due_date)}</span>` : ''}
+                ${t.scheduled_start ? `<span>🕒 ${escapeHtml(t.scheduled_start)}</span>` : ''}
+                ${t.ref_id ? `<span>🔗 ${escapeHtml(t.ref_id)}</span>` : ''}
+                ${t.outlook_event_id ? `<span class="badge badge-done">📅 GCal Synced</span>` : ''}
+              </div>
+            </div>
+          </div>
+          <div style="display:flex; gap:5px; flex-wrap:wrap; flex-shrink:0;">
+            ${(!compact && hasCalTime) ? `
+              <button class="btn btn-secondary btn-sm" onclick="handleSyncTaskCalendar('${t.task_id}')" title="Sync ke Google Calendar">📅 GCal</button>
+              <button class="btn btn-secondary btn-sm" onclick="openOutlookWebForTask('${t.task_id}')" title="Buka di Outlook Web">Outlook ↗</button>
+              <button class="btn btn-secondary btn-sm" onclick="downloadSingleTaskIcs('${t.task_id}')" title="Download .ICS">.ICS</button>
+            ` : ''}
+            <button class="btn btn-secondary btn-sm" onclick="openTaskModal('${t.task_id}')">Edit</button>
+            ${!compact ? `<button class="btn btn-danger btn-sm" onclick="handleDeleteTask('${t.task_id}')">Hapus</button>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    /* ==================== MODULE 5: WEEKLY ACCOUNTABILITY REVIEW ==================== */
+
+    function getCurrentWeekRangeLabel(todayStr) {
+      const d = new Date(todayStr + 'T12:00:00');
+      const day = d.getDay();
+      const diffToMon = day === 0 ? -6 : 1 - day;
+      const mon = new Date(d.getTime() + diffToMon * 24 * 60 * 60 * 1000);
+      const sun = new Date(mon.getTime() + 6 * 24 * 60 * 60 * 1000);
+      const fmt = dt => `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+      return `${fmt(mon)} s/d ${fmt(sun)}`;
+    }
+
+    function computeLiveWeeklySnapshot() {
+      const { todayStr, tasks, contents, products, neglectedIdeasCount } = APP_STATE.data;
+      const doneTasks = (tasks || []).filter(t => t.status === 'Done');
+      const openTasks = (tasks || []).filter(t => t.status !== 'Done');
+      const overdueTasks = openTasks.filter(t => t.due_date && t.due_date < todayStr);
+      const totalTasks = (tasks || []).length;
+      const taskRate = totalTasks ? Math.round((doneTasks.length / totalTasks) * 100) : 0;
+
+      const personalAll = (contents || []).filter(c => normalizeAccount(c.account) === 'Personal');
+      const personalPub = personalAll.filter(c => c.status === 'Published').length;
+      const personalSched = personalAll.filter(c => c.status === 'Scheduled' || c.status === 'Ready to Publish').length;
+
+      const devAll = (contents || []).filter(c => normalizeAccount(c.account) === 'Dev.Impact');
+      const devPub = devAll.filter(c => c.status === 'Published').length;
+      const devSched = devAll.filter(c => c.status === 'Scheduled' || c.status === 'Ready to Publish').length;
+
+      const activeProducts = (products || []).filter(p => (p.completion_status || 'Active') === 'Active');
+      const avgProdPct = activeProducts.length
+        ? Math.round(activeProducts.reduce((acc, p) => acc + (Number(p.progress_pct) || 0), 0) / activeProducts.length)
+        : 0;
+
+      return {
+        weekRange: getCurrentWeekRangeLabel(todayStr),
+        doneCount: doneTasks.length,
+        openCount: openTasks.length,
+        totalTasks: totalTasks,
+        taskRate: taskRate,
+        overdueTasks: overdueTasks,
+        publishedTotal: personalPub + devPub,
+        avgProdPct: avgProdPct,
+        plannedVsDoneText: `Selesai: ${doneTasks.length} dari ${totalTasks} tugas (${taskRate}%). Tugas terbuka: ${openTasks.length} item.`,
+        contentSummaryText: `Personal Threads: ${personalPub} Published, ${personalSched} Ready/Scheduled (Total bank: ${personalAll.length}).\nDev.Impact: ${devPub} Published, ${devSched} Ready/Scheduled (Total bank: ${devAll.length}).`,
+        productSummaryText: activeProducts.length
+          ? activeProducts.map(p => `- ${p.product_name} (${p.stage}): ${Number(p.progress_pct) || 0}%`).join('\n')
+          : 'Belum ada produk digital aktif.',
+        delayedAnalysisText: [
+          `Tugas Overdue (${overdueTasks.length}): ${overdueTasks.length ? overdueTasks.map(t => `${t.title} [Due: ${t.due_date}]`).join('; ') : 'Tidak ada.'}`,
+          `Ide terabaikan >7 hari: ${neglectedIdeasCount} ide.`
+        ].join('\n')
+      };
+    }
+
+    function renderWeeklyReviewView() {
+      const snap = computeLiveWeeklySnapshot();
+      const reviews = APP_STATE.data.weeklyReviews || [];
+      const draft = APP_STATE.activeReviewDraft || {
+        review_id: '',
+        week_range: snap.weekRange,
+        weekly_targets: '',
+        planned_vs_done: snap.plannedVsDoneText,
+        content_summary: snap.contentSummaryText,
+        product_summary: snap.productSummaryText,
+        delayed_analysis: snap.delayedAnalysisText,
+        reflection_notes: '',
+        next_week_priorities: ''
+      };
+
+      const historyHtml = reviews.length ? reviews.map(r => `
+        <div class="task-item" style="flex-wrap:wrap;">
+          <div style="flex:1; min-width:260px;">
+            <div class="task-title">
+              <span style="color:var(--text-muted); font-size:12px;">${escapeHtml(r.review_id)}</span> —
+              Minggu: ${escapeHtml(r.week_range)}
+            </div>
+            <div class="task-meta">
+              <span>📊 ${escapeHtml(r.planned_vs_done)}</span>
+            </div>
+            ${r.weekly_targets ? `<div class="snippet-box"><strong>Target Minggu Itu:</strong> ${escapeHtml(r.weekly_targets)}</div>` : ''}
+            ${r.next_week_priorities ? `<div class="snippet-box" style="border-left:3px solid var(--color-success);"><strong>Prioritas Berikutnya:</strong>\n${escapeHtml(r.next_week_priorities)}</div>` : ''}
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="loadReviewIntoForm('${r.review_id}')">Buka / Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="handleDeleteWeeklyReview('${r.review_id}')">Hapus</button>
+          </div>
+        </div>
+      `).join('') : '<div class="empty-state">Belum ada riwayat Weekly Review tersimpan. Isi formulir di atas setiap hari Minggu pukul 16:00 WIB.</div>';
+
+      return `
+        <div class="grid-4">
+          <div class="kpi-box">
+            <div class="kpi-label">Rasio Tugas Selesai</div>
+            <div class="kpi-value" style="color:var(--color-success);">${snap.taskRate}%</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-label">Konten Published</div>
+            <div class="kpi-value">${snap.publishedTotal}</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-label">Progres Produk Aktif</div>
+            <div class="kpi-value" style="color:var(--color-product);">${snap.avgProdPct}%</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-label">Item Terlambat (Overdue)</div>
+            <div class="kpi-value" style="color:${snap.overdueTasks.length ? 'var(--color-danger)' : 'var(--text-primary)'};">${snap.overdueTasks.length}</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${draft.review_id ? `Edit Weekly Review (${draft.review_id})` : 'Formulir Evaluasi Mingguan (Sunday 16:00 - 17:30 WIB)'}</div>
+              <div style="font-size:12px; color:var(--text-secondary);">Evaluasi jujur antara rencana dan realisasi untuk menjaga ritme jangka panjang.</div>
+            </div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="autoFillWeeklyMetrics()">⚡ Tarik Data Minggu Ini</button>
+              ${draft.review_id ? `<button type="button" class="btn btn-secondary btn-sm" onclick="resetWeeklyReviewForm()">+ Buat Review Baru</button>` : ''}
+            </div>
+          </div>
+
+          <div class="editor-split">
+            <form id="weeklyReviewForm" onsubmit="handleSaveWeeklyReview(event)">
+              <input type="hidden" id="revId" value="${escapeHtml(draft.review_id)}">
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Rentang Minggu (Week Range) *</label>
+                  <input type="text" class="input" id="revWeekRange" required value="${escapeHtml(draft.week_range)}">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Planned vs Done (Realisasi Tugas)</label>
+                  <input type="text" class="input" id="revPlannedDone" value="${escapeHtml(draft.planned_vs_done)}">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Target Utama Minggu Ini (Weekly Targets)</label>
+                <textarea class="textarea" id="revTargets" rows="2" placeholder="Apa 3 komitmen utama yang Anda tetapkan di awal minggu?">${escapeHtml(draft.weekly_targets)}</textarea>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Ringkasan Konten (Personal & Dev.Impact)</label>
+                  <textarea class="textarea" id="revContentSum" rows="3">${escapeHtml(draft.content_summary)}</textarea>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Ringkasan Progres Produk Digital</label>
+                  <textarea class="textarea" id="revProductSum" rows="3">${escapeHtml(draft.product_summary)}</textarea>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Analisis Hambatan & Tugas Tertunda (Delayed Analysis)</label>
+                <textarea class="textarea" id="revDelayed" rows="2" placeholder="Mengapa ada tugas yang tertunda atau ide yang belum disentuh?">${escapeHtml(draft.delayed_analysis)}</textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Catatan Refleksi & Pembelajaran (Reflection Notes)</label>
+                <textarea class="textarea" id="revReflection" rows="3" placeholder="Apa yang berjalan sangat baik minggu ini? Kebiasaan apa yang perlu diperbaiki?">${escapeHtml(draft.reflection_notes)}</textarea>
+              </div>
+
+              <div class="form-group">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                  <label class="form-label">Prioritas Utama Minggu Depan (1 baris = 1 prioritas)</label>
+                  <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 9px; font-size:11.5px;" onclick="handleConvertPrioritiesToTasks()">
+                    🚀 Konversi Prioritas → Tasks
+                  </button>
+                </div>
+                <textarea class="textarea" id="revNextPriorities" rows="3" placeholder="1. Selesaikan Bab 3 Ebook Umrah Mandiri&#10;2. Terbitkan 2 utas Dev.Impact tentang data kemiskinan&#10;3. Rapikan 5 ide lama di Idea Bank">${escapeHtml(draft.next_week_priorities)}</textarea>
+              </div>
+
+              <div style="display:flex; justify-content:flex-end; gap:8px;">
+                <button type="submit" class="btn btn-primary" id="btnSaveReview">💾 Simpan Weekly Review</button>
+              </div>
+            </form>
+
+            <div class="ai-panel">
+              <div style="font-weight:700; font-size:13px;">🧭 AI Weekly Accountability Coach</div>
+              <div style="font-size:11.5px; color:var(--text-secondary); margin-top:2px;">
+                Gunakan data evaluasi di samping untuk mendapatkan umpan balik objektif dari ChatGPT atau Gemini.
+              </div>
+
+              <div class="chip-wrap">
+                <button type="button" class="btn-chip" onclick="buildWeeklyCoachPrompt('audit')">Audit Bottleneck & Delay</button>
+                <button type="button" class="btn-chip" onclick="buildWeeklyCoachPrompt('balance')">Keseimbangan Konten vs Produk</button>
+                <button type="button" class="btn-chip" onclick="buildWeeklyCoachPrompt('nextweek')">Susun Rencana Minggu Depan</button>
+                <button type="button" class="btn-chip" onclick="buildWeeklyCoachPrompt('reflection')">Refleksi & Reset Fokus</button>
+              </div>
+
+              <div class="prompt-preview" id="weeklyPromptBox">Pilih salah satu tombol evaluasi di atas untuk membuat prompt Weekly Coach...</div>
+              <button type="button" class="btn btn-secondary btn-sm" style="width:100%;" onclick="copyPromptFromBox('weeklyPromptBox')">
+                📋 Copy Prompt ke Clipboard
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📚 Arsip Weekly Accountability Reviews (${reviews.length})</div>
+          </div>
+          ${historyHtml}
+        </div>
+      `;
+    }
+
+    function autoFillWeeklyMetrics() {
+      const snap = computeLiveWeeklySnapshot();
+      document.getElementById('revWeekRange').value = snap.weekRange;
+      document.getElementById('revPlannedDone').value = snap.plannedVsDoneText;
+      document.getElementById('revContentSum').value = snap.contentSummaryText;
+      document.getElementById('revProductSum').value = snap.productSummaryText;
+      document.getElementById('revDelayed').value = snap.delayedAnalysisText;
+      showToast('Metrik minggu ini berhasil ditarik dari database!');
+    }
+
+    function resetWeeklyReviewForm() {
+      APP_STATE.activeReviewDraft = null;
+      renderCurrentView();
+    }
+
+    function loadReviewIntoForm(reviewId) {
+      const r = (APP_STATE.data.weeklyReviews || []).find(x => x.review_id === reviewId);
+      if (!r) return;
+      APP_STATE.activeReviewDraft = { ...r };
+      renderCurrentView();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function buildWeeklyCoachPrompt(mode) {
+      const weekRange = document.getElementById('revWeekRange').value;
+      const targets = document.getElementById('revTargets').value || '(Belum diisi)';
+      const plannedDone = document.getElementById('revPlannedDone').value;
+      const contentSum = document.getElementById('revContentSum').value;
+      const productSum = document.getElementById('revProductSum').value;
+      const delayed = document.getElementById('revDelayed').value;
+      const reflection = document.getElementById('revReflection').value || '(Belum diisi)';
+      const nextPrio = document.getElementById('revNextPriorities').value || '(Belum diisi)';
+
+      const instructions = {
+        audit: 'Analisis akar penyebab keterlambatan (bottleneck) berdasarkan data di bawah ini, dan berikan 3 penyesuaian sistem kerja agar minggu depan tidak terjadi penumpukan tugas.',
+        balance: 'Evaluasi keseimbangan alokasi energi antara pembuatan konten (Personal Threads & Dev.Impact) dan pembangunan produk digital jangka panjang. Mana yang perlu dijaga dan mana yang perlu dikurangi?',
+        nextweek: 'Susun jadwal eksekusi konkret hari Senin sampai Minggu untuk mengeksekusi Prioritas Minggu Depan di bawah ini sesuai blok rutinitas harian saya.',
+        reflection: 'Berikan umpan balik reflektif yang suportif namun tegas sebagai accountability partner, rangkum pencapaian utama minggu ini, dan tetapkan 1 tema fokus utama untuk minggu depan.'
+      };
+
+      const prompt = `Bertindaklah sebagai Executive Productivity & Accountability Coach.\n\nTUGAS:\n${instructions[mode]}\n\nDATA WEEKLY REVIEW (${weekRange}):\n- Target Minggu Ini: ${targets}\n- Realisasi Tugas: ${plannedDone}\n- Output Konten:\n${contentSum}\n- Progres Produk Digital:\n${productSum}\n- Item Tertunda / Overdue:\n${delayed}\n- Catatan Refleksi: ${reflection}\n- Draf Prioritas Minggu Depan:\n${nextPrio}`;
+      document.getElementById('weeklyPromptBox').textContent = prompt;
+    }
+
+    function handleSaveWeeklyReview(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSaveReview');
+      const payload = {
+        review_id: document.getElementById('revId').value,
+        week_range: document.getElementById('revWeekRange').value,
+        weekly_targets: document.getElementById('revTargets').value,
+        planned_vs_done: document.getElementById('revPlannedDone').value,
+        content_summary: document.getElementById('revContentSum').value,
+        product_summary: document.getElementById('revProductSum').value,
+        delayed_analysis: document.getElementById('revDelayed').value,
+        reflection_notes: document.getElementById('revReflection').value,
+        next_week_priorities: document.getElementById('revNextPriorities').value
+      };
+
+      btn.disabled = true;
+      google.script.run
+        .withSuccessHandler(res => {
+          btn.disabled = false;
+          APP_STATE.activeReviewDraft = { ...payload, review_id: res.review_id };
+          showToast(`Weekly Review tersimpan (${res.review_id})!`);
+          loadDashboard();
+        })
+        .withFailureHandler(err => {
+          btn.disabled = false;
+          showToast('Error: ' + err.message);
+        })
+        .saveWeeklyReview(payload);
+    }
+
+    function handleDeleteWeeklyReview(reviewId) {
+      if (!confirm(`Hapus catatan Weekly Review ${reviewId}?`)) return;
+      google.script.run
+        .withSuccessHandler(() => {
+          if (APP_STATE.activeReviewDraft && APP_STATE.activeReviewDraft.review_id === reviewId) {
+            APP_STATE.activeReviewDraft = null;
+          }
+          showToast('Weekly Review dihapus');
+          loadDashboard();
+        })
+        .withFailureHandler(err => showToast('Error: ' + err.message))
+        .deleteWeeklyReview(reviewId);
+    }
+
+    function handleConvertPrioritiesToTasks() {
+      const text = document.getElementById('revNextPriorities').value;
+      const revId = document.getElementById('revId').value;
+      if (!text.trim()) {
+        showToast('Isi terlebih dahulu kolom Prioritas Utama Minggu Depan.');
+        return;
+      }
+      if (!confirm('Buat tugas baru di Master Task List untuk setiap baris prioritas minggu depan?')) return;
+
+      google.script.run
+        .withSuccessHandler(res => {
+          showToast(`${res.created_count} tugas prioritas dibuat (Due: ${res.due_date})!`);
+          loadDashboard();
+        })
+        .withFailureHandler(err => showToast('Error: ' + err.message))
+        .createTasksFromWeeklyPriorities(text, revId);
+    }
+
+    /* ==================== SETTINGS, REMINDERS & DB ==================== */
+
+    function renderSettingsView() {
+      const { spreadsheetUrl, allRoutines, userEmail, dailyReminderEnabled, weeklyReminderEnabled } = APP_STATE.data;
+      const routinesHtml = (allRoutines || []).map(r => `
+        <div class="task-item" style="flex-wrap:wrap;">
+          <div style="flex:1; min-width:220px;">
+            <div style="font-weight:700; font-size:13px;">${escapeHtml(r.day_of_week)} — ${escapeHtml(r.focus_category)}</div>
+            <input type="text" class="input" style="margin-top:6px;" id="rtn_act_${r.routine_id}" value="${escapeHtml(r.activity_name)}">
+          </div>
+          <div style="display:flex; gap:6px; align-items:center; margin-top:6px;">
+            <input type="time" class="input" style="width:110px;" id="rtn_start_${r.routine_id}" value="${escapeHtml(r.start_time)}">
+            <span>-</span>
+            <input type="time" class="input" style="width:110px;" id="rtn_end_${r.routine_id}" value="${escapeHtml(r.end_time)}">
+            <button class="btn btn-primary btn-sm" onclick="handleSaveRoutine('${r.routine_id}', '${r.day_of_week}', '${r.focus_category}')">Simpan</button>
+          </div>
+        </div>
+      `).join('');
+
+      return `
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🔔 Automated Email Reminders</div>
+            </div>
+            <p style="font-size:12.5px; color:var(--text-secondary); margin-bottom:12px;">
+              Email tujuan: <strong>${escapeHtml(userEmail || 'Akun Google Anda')}</strong>
+            </p>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); gap:8px; flex-wrap:wrap;">
+              <div>
+                <div style="font-weight:600; font-size:13px;">Daily Morning Briefing (06:30 WIB)</div>
+                <div style="font-size:11.5px; color:var(--text-secondary);">Jadwal fokus, tugas jatuh tempo & overdue</div>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button class="btn ${dailyReminderEnabled ? 'btn-danger' : 'btn-primary'} btn-sm"
+                  onclick="handleToggleDailyTrigger(${!dailyReminderEnabled})">
+                  ${dailyReminderEnabled ? 'Matikan' : 'Aktifkan'}
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="handleSendTestDigest()">Tes Kirim</button>
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; padding-top:10px; gap:8px; flex-wrap:wrap;">
+              <div>
+                <div style="font-weight:600; font-size:13px;">Sunday Weekly Review Reminder (16:00 WIB)</div>
+                <div style="font-size:11.5px; color:var(--text-secondary);">Pengingat evaluasi mingguan setiap hari Minggu</div>
+              </div>
+              <button class="btn ${weeklyReminderEnabled ? 'btn-danger' : 'btn-primary'} btn-sm"
+                onclick="handleToggleWeeklyTrigger(${!weeklyReminderEnabled})">
+                ${weeklyReminderEnabled ? 'Matikan' : 'Aktifkan'}
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🗄️ Koneksi Database Google Sheets</div>
+              <button class="btn btn-secondary btn-sm" onclick="handleVerifyDb()">Verifikasi 7 Tabel</button>
+            </div>
+            <p style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">
+              Seluruh 7 tabel (Ideas, Contents, Products, Tasks, Weekly_Routines, Weekly_Reviews, Prompt_Templates) tersimpan di Google Sheets Anda.
+            </p>
+            <a href="${spreadsheetUrl}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">
+              Buka Database Google Sheets ↗
+            </a>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Jadwal Fokus Mingguan (Editable Schedule)</div>
+          </div>
+          ${routinesHtml}
+        </div>
+      `;
+    }
+
+    /* ==================== CALENDAR SYNC & .ICS EXPORT HELPERS ==================== */
+
+    function handleSyncTaskCalendar(taskId) {
+      showToast('Menyinkronkan ke Google Calendar...');
+      google.script.run
+        .withSuccessHandler(() => {
+          showToast('Tugas berhasil disinkronkan ke Google Calendar!');
+          loadDashboard();
+        })
+        .withFailureHandler(err => showToast('Gagal sync: ' + err.message))
+        .syncTaskToGoogleCalendar(taskId);
+    }
+
+    function handleSyncContentCalendar(contentId) {
+      showToast('Menyinkronkan jadwal konten ke Google Calendar...');
+      google.script.run
+        .withSuccessHandler(() => {
+          showToast('Jadwal konten masuk ke Google Calendar!');
+          loadDashboard();
+        })
+        .withFailureHandler(err => showToast('Gagal sync: ' + err.message))
+        .syncContentToGoogleCalendar(contentId);
+    }
+
+    function handleSyncAllGoogleCalendar() {
+      const btn = document.getElementById('btnSyncAllGcal');
+      if (btn) btn.disabled = true;
+      showToast('Menyinkronkan semua jadwal aktif ke Google Calendar...');
+      google.script.run
+        .withSuccessHandler(res => {
+          if (btn) btn.disabled = false;
+          showToast(`Selesai! ${res.syncedTasks} tugas & ${res.syncedContents} konten tersinkron.`);
+          loadDashboard();
+        })
+        .withFailureHandler(err => {
+          if (btn) btn.disabled = false;
+          showToast('Error: ' + err.message);
+        })
+        .syncAllUpcomingToGoogleCalendar();
+    }
+
+    function toIcsDateTime(dateTimeStr) {
+      const clean = String(dateTimeStr || '').trim().replace(' ', 'T');
+      if (!clean) return '';
+      if (clean.length === 10) return clean.replace(/-/g, '') + 'T090000';
+      return clean.slice(0, 16).replace(/[-:T]/g, '') + '00';
+    }
+
+    function addOneHourIcs(icsStart) {
+      const y = parseInt(icsStart.slice(0, 4), 10);
+      const m = parseInt(icsStart.slice(4, 6), 10) - 1;
+      const d = parseInt(icsStart.slice(6, 8), 10);
+      const hh = parseInt(icsStart.slice(9, 11), 10);
+      const mm = parseInt(icsStart.slice(11, 13), 10);
+      const dt = new Date(y, m, d, hh + 1, mm, 0);
+      return `${dt.getFullYear()}${String(dt.getMonth()+1).padStart(2,'0')}${String(dt.getDate()).padStart(2,'0')}T${String(dt.getHours()).padStart(2,'0')}${String(dt.getMinutes()).padStart(2,'0')}00`;
+    }
+
+    function triggerIcsDownload(filename, events) {
+      if (!events.length) {
+        showToast('Tidak ada jadwal yang dapat diekspor ke .ICS');
+        return;
+      }
+      const lines = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//My Command Center//ID',
+        'CALSCALE:GREGORIAN',
+        'METHOD:PUBLISH'
+      ];
+      const stamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
+
+      events.forEach((ev, idx) => {
+        lines.push(
+          'BEGIN:VEVENT',
+          `UID:mcc-${Date.now()}-${idx}@mycommandcenter.local`,
+          `DTSTAMP:${stamp}`,
+          `DTSTART;TZID=Asia/Jakarta:${ev.start}`,
+          `DTEND;TZID=Asia/Jakarta:${ev.end}`,
+          `SUMMARY:${ev.summary.replace(/\n/g, ' ')}`,
+          `DESCRIPTION:${ev.description.replace(/\n/g, '\\n')}`,
+          'END:VEVENT'
+        );
+      });
+      lines.push('END:VCALENDAR');
+
+      const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(`File ${filename} berhasil diunduh untuk Outlook/Calendar!`);
+    }
+
+    function downloadSingleTaskIcs(taskId) {
+      const t = (APP_STATE.data.tasks || []).find(x => x.task_id === taskId);
+      if (!t) return;
+      const start = toIcsDateTime(t.scheduled_start || t.due_date);
+      if (!start) return showToast('Tugas ini belum memiliki tanggal/waktu.');
+      const end = t.scheduled_end ? toIcsDateTime(t.scheduled_end) : addOneHourIcs(start);
+      triggerIcsDownload(`${t.task_id}.ics`, [{
+        start: start,
+        end: end,
+        summary: `[${t.module_source}] ${t.title}`,
+        description: `Prioritas: ${t.priority} | Status: ${t.status}`
+      }]);
+    }
+
+    function downloadSingleContentIcs(contentId) {
+      const c = (APP_STATE.data.contents || []).find(x => x.content_id === contentId);
+      if (!c || !c.scheduled_at) return;
+      const start = toIcsDateTime(c.scheduled_at);
+      const end = addOneHourIcs(start);
+      triggerIcsDownload(`${c.content_id}.ics`, [{
+        start: start,
+        end: end,
+        summary: `[Publish ${c.account}] ${c.hook}`,
+        description: `Pilar: ${c.pillar}\n${c.body_draft || ''}`
+      }]);
+    }
+
+    function downloadWeeklyCalendarIcs() {
+      const { todayStr, tasks, contents } = APP_STATE.data;
+      const events = [];
+
+      (tasks || []).filter(t => t.status !== 'Done' && (t.scheduled_start || t.due_date >= todayStr)).forEach(t => {
+        const start = toIcsDateTime(t.scheduled_start || t.due_date);
+        if (start) {
+          events.push({
+            start: start,
+            end: t.scheduled_end ? toIcsDateTime(t.scheduled_end) : addOneHourIcs(start),
+            summary: `[${t.module_source}] ${t.title}`,
+            description: `Task ID: ${t.task_id} | Priority: ${t.priority}`
+          });
+        }
+      });
+
+      (contents || []).filter(c => c.status !== 'Published' && c.scheduled_at >= todayStr).forEach(c => {
+        const start = toIcsDateTime(c.scheduled_at);
+        if (start) {
+          events.push({
+            start: start,
+            end: addOneHourIcs(start),
+            summary: `[Publish ${c.account}] ${c.hook}`,
+            description: `Pilar: ${c.pillar}`
+          });
+        }
+      });
+
+      triggerIcsDownload(`Command_Center_Schedule_${todayStr}.ics`, events);
+    }
+
+    function openOutlookWebForTask(taskId) {
+      const t = (APP_STATE.data.tasks || []).find(x => x.task_id === taskId);
+      if (!t) return;
+      const baseDt = (t.scheduled_start || (t.due_date ? t.due_date + 'T09:00' : '')).replace(' ', 'T');
+      if (!baseDt) return showToast('Isi tanggal/jam terlebih dahulu.');
+      const startIso = baseDt.length === 16 ? baseDt + ':00' : baseDt;
+      const endDt = t.scheduled_end ? t.scheduled_end.replace(' ', 'T') + ':00' : startIso;
+
+      const url = 'https://outlook.live.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent' +
+        '&subject=' + encodeURIComponent(`[${t.module_source}] ${t.title}`) +
+        '&startdt=' + encodeURIComponent(startIso) +
+        '&enddt=' + encodeURIComponent(endDt) +
+        '&body=' + encodeURIComponent(`Task ID: ${t.task_id} | Prioritas: ${t.priority}`);
+      window.open(url, '_blank', 'noopener');
+    }
+
+    function handleToggleDailyTrigger(enable) {
+      google.script.run
+        .withSuccessHandler(res => {
+          showToast(res.enabled ? 'Pengingat harian 06:30 WIB diaktifkan!' : 'Pengingat harian dimatikan.');
+          loadDashboard();
+        })
+        .withFailureHandler(err => showToast('Error: ' + err.message))
+        .toggleDailyReminderTrigger(enable);
+    }
+
+    function handleToggleWeeklyTrigger(enable) {
+      google.script.run
+        .withSuccessHandler(res => {
+          showToast(res.enabled ? 'Pengingat Weekly Review (Minggu 16:00 WIB) diaktifkan!' : 'Pengingat mingguan dimatikan.');
+          loadDashboard();
+        })
+        .withFailureHandler(err => showToast('Error: ' + err.message))
+        .toggleWeeklyReviewTrigger(enable);
+    }
+
+    function handleSendTestDigest() {
+      showToast('Mengirim email briefing hari ini...');
+      google.script.run
+        .withSuccessHandler(res => showToast(`Briefing terkirim ke ${res.sentTo}!`))
+        .withFailureHandler(err => showToast('Error: ' + err.message))
+        .sendDailyDigestAndReminders();
+    }
+
+    /* ==================== IDEA, CONTENT, PRODUCT & TASK MODAL HANDLERS ==================== */
+
+    function openIdeaModal(ideaId) {
+      document.getElementById('ideaForm').reset();
+      document.getElementById('ideaPromptBox').textContent = 'Pilih salah satu tombol aksi di atas untuk membuat prompt siap salin...';
+
+      if (ideaId) {
+        const item = (APP_STATE.data.ideas || []).find(x => x.idea_id === ideaId);
+        if (!item) return;
+        document.getElementById('ideaModalTitle').textContent = `Olah Ide (${item.idea_id})`;
+        document.getElementById('ideaId').value = item.idea_id;
+        document.getElementById('ideaTitle').value = item.title || '';
+        document.getElementById('ideaSource').value = item.source || 'Observation';
+        document.getElementById('ideaCategory').value = item.category || 'General';
+        document.getElementById('ideaPriority').value = item.priority || 'Medium';
+        document.getElementById('ideaStatus').value = item.status || 'New Idea';
+        document.getElementById('ideaRawNotes').value = item.raw_notes || '';
+        document.getElementById('ideaAiNotes').value = item.ai_notes || '';
+      } else {
+        document.getElementById('ideaModalTitle').textContent = 'Tambah Ide Baru';
+        document.getElementById('ideaId').value = '';
+      }
+      document.getElementById('ideaModal').classList.add('open');
+    }
+
+    function buildIdeaPrompt(actionType) {
+      const title = document.getElementById('ideaTitle').value.trim() || '[Judul Ide]';
+      const notes = document.getElementById('ideaRawNotes').value.trim() || '(Belum ada catatan tambahan)';
+      const category = document.getElementById('ideaCategory').value;
+
+      let persona = 'Anda adalah mitra berpikir strategis untuk pengembangan pengetahuan, konten, dan produk digital.';
+      if (category === 'Personal Threads') {
+        persona = 'Anda adalah editor konten untuk akun Threads personal bertema parenting, perjalanan, dan refleksi hidup. Gunakan gaya bahasa hangat, autentik, personal, dan tidak kaku.';
+      } else if (category === 'Dev.Impact') {
+        persona = 'Anda adalah analis riset, statistik, dan kebijakan publik untuk platform Dev.Impact. Gunakan pendekatan analitis, berbasis bukti, kritis, namun mudah dipahami publik.';
+      } else if (category === 'Digital Product') {
+        persona = 'Anda adalah product strategist untuk pembuatan produk digital edukatif (ebook, toolkit Excel, panduan riset, kursus online).';
+      }
+
+      const instructions = {
+        develop: 'Kembangkan ide mentah berikut menjadi konsep yang tajam, terstruktur, lengkap dengan poin-poin utama dan nilai tambah bagi pembaca.',
+        angles: 'Berikan 5 sudut pandang (content angles) yang berbeda dan menarik untuk membahas ide ini, beserta alasan mengapa sudut pandang tersebut relevan.',
+        outline: 'Buatkan kerangka tulisan (writing outline) langkah demi langkah mulai dari pembuka yang kuat, argumen/cerita inti, hingga penutup yang memicu diskusi.',
+        series: 'Rancang rencana seri konten 5 hari (Day 1 sampai Day 5) dari ide ini. Untuk setiap hari, berikan judul fokus, pesan utama, dan hook pembuka.',
+        audience: 'Identifikasi segmen audiens utama dan sekunder yang paling membutuhkan topik ini, apa masalah/pain point mereka, dan hasil apa yang mereka harapkan.',
+        actions: 'Buatkan daftar 5 langkah aksi konkret berikutnya (next actions) yang dapat langsung dieksekusi dalam waktu 30–60 menit per langkah.'
+      };
+
+      const prompt = `${persona}\n\nTUGAS:\n${instructions[actionType]}\n\nKONTEKS IDE:\n- Kategori: ${category}\n- Inti Ide: ${title}\n- Catatan Mentah:\n${notes}`;
+      document.getElementById('ideaPromptBox').textContent = prompt;
+    }
+
+    function handleSaveIdea(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSaveIdea');
+      const ideaId = document.getElementById('ideaId').value;
+      const payload = {
+        idea_id: ideaId,
+        title: document.getElementById('ideaTitle').value,
+        source: document.getElementById('ideaSource').value,
+        category: document.getElementById('ideaCategory').value,
+        priority: document.getElementById('ideaPriority').value,
+        status: document.getElementById('ideaStatus').value,
+        raw_notes: document.getElementById('ideaRawNotes').value,
+        ai_notes: document.getElementById('ideaAiNotes').value
+      };
+
+      btn.disabled = true;
+      const runner = google.script.run
+        .withSuccessHandler(() => {
+          btn.disabled = false;
+          closeModal('ideaModal');
+          showToast(ideaId ? 'Ide diperbarui' : 'Ide baru ditambahkan');
+          loadDashboard();
+        })
+        .withFailureHandler(err => {
+          btn.disabled = false;
+          showToast('Error: ' + err.message);
+        });
+
+      if (ideaId) runner.updateIdea(payload);
+      else runner.createIdea(payload);
+    }
+
+    function handleConvertIdea(ideaId, targetType) {
+      if (!confirm(`Konversi ide ${ideaId} menjadi ${targetType}?`)) return;
+      google.script.run
+        .withSuccessHandler(res => {
+          showToast(`Berhasil dikonversi ke ${targetType} (${res.ref_id})`);
+          loadDashboard();
+        })
+        .withFailureHandler(err => showToast('Error: ' + err.message))
+        .convertIdeaToTarget(ideaId, targetType, '');
+    }
+
+    function handleDeleteIdea(ideaId) {
+      if (!confirm(`Hapus ide ${ideaId} secara permanen?`)) return;
+      google.script.run
+        .withSuccessHandler(() => {
+          showToast('Ide dihapus');
+          loadDashboard();
+        })
+        .withFailureHandler(err => showToast('Error: ' + err.message))
+        .deleteIdea(ideaId);
+    }
+
+    function openContentModal(account, contentId) {
+      account = normalizeAccount(account);
+      const cfg = ACCOUNT_CONFIG[account];
+      const dynamicPillars = getAccountPillars(account);
+
+      document.getElementById('contentForm').reset();
+      document.getElementById('contentAccount').value = account;
+      document.getElementById('contentPromptBox').textContent = 'Pilih tombol bantuan AI di atas untuk membuat prompt...';
+
+      const pilSel = document.getElementById('contentPillar');
+      pilSel.innerHTML = dynamicPillars.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
+
+      document.getElementById('aiAccountToneHint').textContent = `Tone ${account}: ${cfg.tone}`;
+      const visualTitleEl = document.getElementById('visualSectionTitle');
+      const visualChipsEl = document.getElementById('visualPromptChips');
+
+      if (account === 'Dev.Impact') {
+        document.getElementById('visualLabel').textContent = 'Konsep Infografis / Chart / Carousel (Dev.Impact)';
+        visualTitleEl.textContent = 'VISUAL DESIGN ASSISTANT (DEV.IMPACT)';
+        visualChipsEl.innerHTML = `
+          <button type="button" class="btn-chip" onclick="buildVisualPrompt('infographic')">Infographic</button>
+          <button type="button" class="btn-chip" onclick="buildVisualPrompt('chart')">Statistical Chart</button>
+          <button type="button" class="btn-chip" onclick="buildVisualPrompt('storytelling')">Data Storytelling</button>
+          <button type="button" class="btn-chip" onclick="buildVisualPrompt('carousel')">Edu Carousel</button>
+          <button type="button" class="btn-chip" onclick="buildVisualPrompt('research')">Research Summary</button>
+          <button type="button" class="btn-chip" onclick="buildVisualPrompt('graphic')">Graphic & Image Prompt</button>
+        `;
+      } else {
+        document.getElementById('visualLabel').textContent = 'Rekomendasi Foto Personal Autentik (Personal Threads)';
+        visualTitleEl.textContent = 'AUTHENTIC STORYTELLING VISUAL';
+        visualChipsEl.innerHTML = `
+          <button type="button" class="btn-chip" onclick="buildVisualPrompt('personal_photo')">Ide Foto Personal Autentik</button>
+        `;
+      }
+
+      if (contentId) {
+        const item = (APP_STATE.data.contents || []).find(c => c.content_id === contentId);
+        if (!item) return;
+        document.getElementById('contentModalTitle').textContent = `${account} Studio (${item.content_id})`;
+        document.getElementById('contentId').value = item.content_id;
+
+        const modeSel = document.getElementById('contentInputMode');
+        const itemMode = String(item.input_mode || 'Capture Idea').trim();
+        if (!Array.from(modeSel.options).some(o => o.value === itemMode)) {
+          const opt = document.createElement('option');
+          opt.value = itemMode;
+          opt.textContent = itemMode;
+          modeSel.appendChild(opt);
+        }
+        modeSel.value = itemMode;
+
+        const itemPillar = String(item.pillar || '').trim();
+        if (itemPillar && !Array.from(pilSel.options).some(o => o.value === itemPillar)) {
+          const opt = document.createElement('option');
+          opt.value = itemPillar;
+          opt.textContent = itemPillar;
+          pilSel.appendChild(opt);
+        }
+        pilSel.value = itemPillar || dynamicPillars[0];
+
+        document.getElementById('contentStatus').value = item.status || 'Idea';
+        const schedStr = String(item.scheduled_at || '');
+        document.getElementById('contentScheduledAt').value = schedStr ? schedStr.replace(' ', 'T').slice(0, 16) : '';
+        document.getElementById('contentSeriesId').value = item.series_id || '';
+        document.getElementById('contentSeriesOrder').value = item.series_order || '';
+        document.getElementById('contentHook').value = item.hook || '';
+        document.getElementById('contentBody').value = item.body_draft || '';
+        document.getElementById('contentVisual').value = item.visual_concept || '';
+        document.getElementById('contentPostUrl').value = item.post_url || '';
+        document.getElementById('contentPerfMetrics').value = item.perf_metrics || '';
+      } else {
+        document.getElementById('contentModalTitle').textContent = `Konten Baru — ${account}`;
+        document.getElementById('contentId').value = '';
+      }
+
+      toggleContentModeUI();
+      updateThreadCounter();
+      document.getElementById('contentModal').classList.add('open');
+    }
+
+    function toggleContentModeUI() {
+      const mode = document.getElementById('contentInputMode').value;
+      const statusSel = document.getElementById('contentStatus');
+      if (mode === 'Ready to Publish' && (statusSel.value === 'Idea' || statusSel.value === 'Developing')) {
+        statusSel.value = 'Ready to Publish';
+      }
+    }
+
+    function updateThreadCounter() {
+      const body = document.getElementById('contentBody').value;
+      const parts = body.split(/\n---\n/).filter(p => p.trim().length > 0);
+      document.getElementById('threadStats').textContent =
+        `${parts.length || (body.trim() ? 1 : 0)} post | ${body.length} karakter`;
+    }
+
+    function buildContentPrompt(type) {
+      const account = document.getElementById('contentAccount').value;
+      const cfg = ACCOUNT_CONFIG[account];
+      const pillar = document.getElementById('contentPillar').value;
+      const hook = document.getElementById('contentHook').value.trim() || '[Belum ada hook]';
+      const body = document.getElementById('contentBody').value.trim() || '(Belum ada isi draf)';
+
+      const tasks = {
+        develop: 'Kembangkan ide/hook ini menjadi draf utas Threads lengkap (4–7 post pendek, masing-masing maksimal 450 karakter, dipisah dengan baris ---).',
+        perspectives: 'Berikan 4 sudut pandang alternatif untuk membahas topik ini agar lebih segar dan memicu interaksi komentar sehat di Threads.',
+        hooks: 'Buatkan 5 variasi hook pembuka Threads yang kuat (kombinasi pertanyaan tajam, observasi mengejutkan, dan cerita singkat).',
+        outline: 'Susun kerangka utas Threads dari Post 1 (Hook), Post 2-4 (Isi/Bukti/Cerita), hingga Post terakhir (Kesimpulan & pertanyaan diskusi).',
+        series: 'Pecah topik ini menjadi seri konten 5 hari berturut-turut. Tuliskan judul tema harian dan hook pembuka untuk masing-masing hari.',
+        proofread: 'Sunting dan tingkatkan alur baca draf di bawah ini agar lebih tajam, ritmis, bebas typo, serta pertahankan batas karakter per post Threads (maks 500 karakter/post).',
+        schedule: 'Rekomendasikan hari dan jam tayang terbaik (WIB) untuk topik ini beserta strategi interaksi 30 menit pertama setelah tayang.',
+        references: 'Identifikasi jenis data, indikator statistik, literatur, atau referensi kebijakan publik relevan yang perlu dikutip untuk memperkuat argumen utas ini.'
+      };
+
+      const prompt = `KONTEKS AKUN (${account}):\n- Positioning: ${cfg.positioning}\n- Pilar Konten: ${pillar}\n- Gaya Bahasa (Tone): ${cfg.tone}\n\nTUGAS:\n${tasks[type]}\n\nBAHAN KONTEN:\nHook: ${hook}\nDraf/Catatan:\n${body}`;
+      document.getElementById('contentPromptBox').textContent = prompt;
+    }
+
+    function buildVisualPrompt(visualType) {
+      const hook = document.getElementById('contentHook').value.trim() || '[Topik Konten]';
+      const body = document.getElementById('contentBody').value.trim() || '(Lihat hook)';
+
+      if (visualType === 'personal_photo') {
+        document.getElementById('contentPromptBox').textContent =
+          `Berikan 3 ide foto personal yang autentik, hangat, dan tidak terkesan dibuat-buat untuk mendampingi utas Personal Threads berikut:\n\nHook: ${hook}\nIsi: ${body}\n\nJelaskan objek foto, pencahayaan alami, dan mengapa foto tersebut memperkuat emosi cerita (hindari desain infografis formal).`;
+        return;
+      }
+
+      const visualLabels = {
+        infographic: 'Infografis ringkas 1 halaman (rasio 4:5)',
+        chart: 'Grafik statistik (Statistical Chart) yang paling akurat menggambarkan data',
+        storytelling: 'Visual Data Storytelling bertahap (Before-After / Perbandingan)',
+        carousel: 'Carousel edukasi 5–7 slide untuk Threads/Instagram',
+        research: 'Visual Research Summary (ringkasan temuan studi dalam 1 kartu)',
+        graphic: 'Konsep grafis media sosial beserta prompt siap pakai untuk AI Image Generator'
+      };
+
+      const prompt = `Bertindaklah sebagai Information Designer & Data Visualization Specialist untuk Dev.Impact.\n\nBuatkan konsep visual untuk jenis: ${visualLabels[visualType]}.\n\nTOPIK UTAS:\nHook: ${hook}\nIsi:\n${body}\n\nSertakan dalam jawaban Anda:\n1. Konsep & struktur tata letak (layout) per bagian/slide\n2. Jenis chart/diagram yang disarankan dan alasan metodologisnya\n3. Rekomendasi palet warna (kode Hex bernuansa Deep Teal #0F766E / Slate yang kredibel)\n4. Teks headline singkat yang harus muncul di dalam gambar\n5. Prompt deskriptif siap pakai untuk image generator.`;
+      document.getElementById('contentPromptBox').textContent = prompt;
+    }
+
+    function handleSaveContent(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSaveContent');
+      const contentId = document.getElementById('contentId').value;
+      const schedRaw = document.getElementById('contentScheduledAt').value;
+
+      const payload = {
+        content_id: contentId,
+        account: document.getElementById('contentAccount').value,
+        input_mode: document.getElementById('contentInputMode').value,
+        pillar: document.getElementById('contentPillar').value,
+        status: document.getElementById('contentStatus').value,
+        scheduled_at: schedRaw ? schedRaw.replace('T', ' ') : '',
+        series_id: document.getElementById('contentSeriesId').value.trim(),
+        series_order: document.getElementById('contentSeriesOrder').value,
+        hook: document.getElementById('contentHook').value,
+        body_draft: document.getElementById('contentBody').value,
+        visual_concept: document.getElementById('contentVisual').value,
+        post_url: document.getElementById('contentPostUrl').value,
+        perf_metrics: document.getElementById('contentPerfMetrics').value
+      };
+
+      btn.disabled = true;
+      const runner = google.script.run
+        .withSuccessHandler(() => {
+          btn.disabled = false;
+          closeModal('contentModal');
+          showToast(contentId ? 'Konten diperbarui' : 'Konten baru disimpan');
+          loadDashboard();
+        })
+        .withFailureHandler(err => {
+          btn.disabled = false;
+          showToast('Error: ' + err.message);
+        });
+
+      if (contentId) runner.updateContent(payload);
+      else runner.createContent(payload);
+    }
+
+    function handleDeleteContent(contentId) {
+      if (!confirm(`Hapus konten ${contentId}?`)) return;
+      google.script.run
+        .withSuccessHandler(() => {
+          showToast('Konten dihapus');
+          loadDashboard();
+        })
+        .withFailureHandler(err => showToast('Error: ' + err.message))
+        .deleteContent(contentId);
+    }
+
+    function openSeriesModal(account) {
+      account = normalizeAccount(account);
+      const dynamicPillars = getAccountPillars(account);
+      document.getElementById('seriesAccount').value = account;
+      document.getElementById('seriesModalTitle').textContent = `Content Series Generator — ${account}`;
+      document.getElementById('seriesPillar').innerHTML = dynamicPillars.map(p =>
+        `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`
+      ).join('');
+      document.getElementById('seriesTopic').value = '';
+      document.getElementById('seriesOutlines').value = '';
+      document.getElementById('seriesStartDate').value = APP_STATE.data ? APP_STATE.data.todayStr : '';
+      document.getElementById('seriesModal').classList.add('open');
+    }
+
+    function handleCreateSeries(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnCreateSeries');
+      const payload = {
+        account: document.getElementById('seriesAccount').value,
+        series_topic: document.getElementById('seriesTopic').value,
+        pillar: document.getElementById('seriesPillar').value,
+        count: document.getElementById('seriesCount').value,
+        start_date: document.getElementById('seriesStartDate').value,
+        outlines: document.getElementById('seriesOutlines').value
+      };
+
+      btn.disabled = true;
+      google.script.run
+        .withSuccessHandler(res => {
+          btn.disabled = false;
+          closeModal('seriesModal');
+          APP_STATE.contentTab = 'series';
+          showToast(`Series ${res.series_id} dibuat (${res.created_count} post)`);
+          loadDashboard();
+        })
+        .withFailureHandler(err => {
+          btn.disabled = false;
+          showToast('Error: ' + err.message);
+        })
+        .createContentSeries(payload);
+    }
+
+    function openProductModal(productId) {
+      document.getElementById('productForm').reset();
+      document.getElementById('productPromptBox').textContent = 'Pilih salah satu tombol strategi produk di atas untuk membuat prompt...';
+
+      if (productId) {
+        const p = (APP_STATE.data.products || []).find(x => x.product_id === productId);
+        if (!p) return;
+        document.getElementById('productModalTitle').textContent = `Kelola Produk (${p.product_id})`;
+        document.getElementById('productId').value = p.product_id;
+        document.getElementById('productName').value = p.product_name || '';
+
+        const typeSel = document.getElementById('productType');
+        const pType = String(p.product_type || 'Ebook').trim();
+        if (!Array.from(typeSel.options).some(o => o.value === pType)) {
+          const opt = document.createElement('option');
+          opt.value = pType;
+          opt.textContent = pType;
+          typeSel.appendChild(opt);
+        }
+        typeSel.value = pType;
+
+        document.getElementById('productStage').value = p.stage || 'Idea';
+        document.getElementById('productCompletionStatus').value = p.completion_status || 'Active';
+        const pct = Number(p.progress_pct) || 0;
+        document.getElementById('productProgress').value = pct;
+        document.getElementById('productProgressLabel').textContent = pct + '%';
+        document.getElementById('productLaunchTarget').value = p.launch_target || '';
+        document.getElementById('productOneDriveUrl').value = p.onedrive_url || '';
+        document.getElementById('productAudience').value = p.target_audience || '';
+        document.getElementById('productValueProp').value = p.value_proposition || '';
+        document.getElementById('productDescription').value = p.description || '';
+      } else {
+        document.getElementById('productModalTitle').textContent = 'Buat Produk Digital Baru';
+        document.getElementById('productId').value = '';
+        document.getElementById('productProgress').value = 0;
+        document.getElementById('productProgressLabel').textContent = '0%';
+      }
+      document.getElementById('productModal').classList.add('open');
+    }
+
+    function buildProductPrompt(type) {
+      const name = document.getElementById('productName').value.trim() || '[Nama Produk]';
+      const pType = document.getElementById('productType').value;
+      const audience = document.getElementById('productAudience').value.trim() || '(Belum ditentukan)';
+      const valueProp = document.getElementById('productValueProp').value.trim() || '(Belum ditentukan)';
+      const desc = document.getElementById('productDescription').value.trim() || '(Belum ada deskripsi detail)';
+
+      const instructions = {
+        blueprint: 'Buatkan struktur lengkap (Product Blueprint & Table of Contents / Daftar Modul) dari awal hingga akhir agar produk ini benar-benar praktis, aplikatif, dan bernilai tinggi.',
+        audience: 'Analisis secara mendalam profil pembeli potensial, 5 masalah utama (pain points) mereka, serta keberatan (objections) yang sering muncul sebelum membeli.',
+        pricing: 'Rancang strategi penetapan harga (Pricing Tiers: Basic vs Pro/Bundle), ide bonus pendamping (template/checklist), dan jaminan nilai agar konversi optimal.',
+        salespage: 'Tuliskan copy halaman penjualan (Landing Page / Sales Page) yang persuasif, jujur, dan terstruktur: Headline, Subheadline, Masalah, Solusi, Isi Produk, FAQ, dan Call-to-Action.',
+        launch: 'Susun rencana kampanye edukasi & peluncuran 7 hari (Day 1–Day 7) di Threads (soft-selling berbasis cerita & studi kasus) tanpa terkesan spam.',
+        milestones: 'Pecah pengerjaan produk ini menjadi 8–10 langkah produksi konkret beserta estimasi durasi pengerjaan per langkah.'
+      };
+
+      const prompt = `Bertindaklah sebagai Senior Digital Product Strategist & Creator.\n\nTUGAS:\n${instructions[type]}\n\nPROFIL PRODUK DIGITAL:\n- Nama Produk: ${name}\n- Jenis Produk: ${pType}\n- Target Audiens: ${audience}\n- Value Proposition: ${valueProp}\n- Catatan & Deskripsi:\n${desc}`;
+      document.getElementById('productPromptBox').textContent = prompt;
+    }
+
+    function handleSaveProduct(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSaveProduct');
+      const productId = document.getElementById('productId').value;
+
+      const payload = {
+        product_id: productId,
+        product_name: document.getElementById('productName').value,
+        product_type: document.getElementById('productType').value,
+        stage: document.getElementById('productStage').value,
+        completion_status: document.getElementById('productCompletionStatus').value,
+        progress_pct: document.getElementById('productProgress').value,
+        launch_target: document.getElementById('productLaunchTarget').value,
+        onedrive_url: document.getElementById('productOneDriveUrl').value,
+        target_audience: document.getElementById('productAudience').value,
+        value_proposition: document.getElementById('productValueProp').value,
+        description: document.getElementById('productDescription').value
+      };
+
+      btn.disabled = true;
+      const runner = google.script.run
+        .withSuccessHandler(() => {
+          btn.disabled = false;
+          closeModal('productModal');
+          showToast(productId ? 'Produk digital diperbarui' : 'Produk digital baru ditambahkan');
+          loadDashboard();
+        })
+        .withFailureHandler(err => {
+          btn.disabled = false;
+          showToast('Error: ' + err.message);
+        });
+
+      if (productId) runner.updateProduct(payload);
+      else runner.createProduct(payload);
+    }
+
+    function handleDeleteProduct(productId) {
+      if (!confirm(`Hapus produk ${productId} secara permanen?`)) return;
+      google.script.run
+        .withSuccessHandler(() => {
+          showToast('Produk dihapus');
+          loadDashboard();
+        })
+        .withFailureHandler(err => showToast('Error: ' + err.message))
+        .deleteProduct(productId);
+    }
+
+    function handleGenerateProductTasks(productId) {
+      google.script.run
+        .withSuccessHandler(res => {
+          showToast(`${res.created_count} starter milestones berhasil dibuat!`);
+          loadDashboard();
+        })
+        .withFailureHandler(err => showToast('Error: ' + err.message))
+        .generateProductStarterTasks(productId);
+    }
+
+    function handleSyncProductProgress(productId) {
+      google.script.run
+        .withSuccessHandler(res => {
+          showToast(`Progres disinkronkan: ${res.progress_pct}% (${res.stage})`);
+          loadDashboard();
+        })
+        .withFailureHandler(err => showToast('Error: ' + err.message))
+        .syncProductProgressFromTasks(productId);
+    }
+
+    function openTaskForProduct(productId) {
+      openTaskModal();
+      document.getElementById('taskModule').value = 'Digital Product';
+      document.getElementById('taskRefId').value = productId;
+      document.getElementById('taskMilestone').checked = true;
+    }
+
+    function handleQuickIdea(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnQuickIdea');
+      const titleEl = document.getElementById('quickIdeaTitle');
+      const catEl = document.getElementById('quickIdeaCategory');
+
+      btn.disabled = true;
+      google.script.run
+        .withSuccessHandler(res => {
+          btn.disabled = false;
+          titleEl.value = '';
+          showToast(`Ide tersimpan (${res.idea_id})`);
+          loadDashboard();
+        })
+        .withFailureHandler(err => {
+          btn.disabled = false;
+          showToast('Error: ' + err.message);
+        })
+        .quickCreateIdea({ title: titleEl.value, category: catEl.value });
+    }
+
+    function openTaskModal(taskId) {
+      document.getElementById('taskForm').reset();
+      if (taskId) {
+        const task = (APP_STATE.data.tasks || []).find(t => t.task_id === taskId);
+        if (!task) return;
+        document.getElementById('taskModalTitle').textContent = `Edit Tugas (${task.task_id})`;
+        document.getElementById('taskId').value = task.task_id;
+        document.getElementById('taskTitle').value = task.title;
+        document.getElementById('taskModule').value = task.module_source || 'General';
+        document.getElementById('taskRefId').value = task.ref_id || '';
+        document.getElementById('taskPriority').value = task.priority || 'Medium';
+        document.getElementById('taskStatus').value = task.status || 'To Do';
+        document.getElementById('taskDueDate').value = task.due_date || '';
+        document.getElementById('taskReminder').value = task.reminder_minutes || 15;
+        const sStart = String(task.scheduled_start || '');
+        const sEnd = String(task.scheduled_end || '');
+        document.getElementById('taskSchedStart').value = sStart ? sStart.replace(' ', 'T').slice(0, 16) : '';
+        document.getElementById('taskSchedEnd').value = sEnd ? sEnd.replace(' ', 'T').slice(0, 16) : '';
+        document.getElementById('taskMilestone').checked = Boolean(task.is_milestone);
+      } else {
+        document.getElementById('taskModalTitle').textContent = 'Tambah Tugas & Time-Block';
+        document.getElementById('taskId').value = '';
+        document.getElementById('taskDueDate').value = APP_STATE.data ? APP_STATE.data.todayStr : '';
+      }
+      document.getElementById('taskModal').classList.add('open');
+    }
+
+    function handleSaveTask(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSaveTask');
+      const taskId = document.getElementById('taskId').value;
+      const startRaw = document.getElementById('taskSchedStart').value;
+      const endRaw = document.getElementById('taskSchedEnd').value;
+
+      const payload = {
+        task_id: taskId,
+        title: document.getElementById('taskTitle').value,
+        module_source: document.getElementById('taskModule').value,
+        ref_id: document.getElementById('taskRefId').value,
+        priority: document.getElementById('taskPriority').value,
+        status: document.getElementById('taskStatus').value,
+        due_date: document.getElementById('taskDueDate').value,
+        scheduled_start: startRaw ? startRaw.replace('T', ' ') : '',
+        scheduled_end: endRaw ? endRaw.replace('T', ' ') : '',
+        reminder_minutes: document.getElementById('taskReminder').value,
+        is_milestone: document.getElementById('taskMilestone').checked
+      };
+
+      btn.disabled = true;
+      const runner = google.script.run
+        .withSuccessHandler(() => {
+          btn.disabled = false;
+          closeModal('taskModal');
+          showToast(taskId ? 'Tugas diperbarui' : 'Tugas baru ditambahkan');
+          loadDashboard();
+        })
+        .withFailureHandler(err => {
+          btn.disabled = false;
+          showToast('Error: ' + err.message);
+        });
+
+      if (taskId) runner.updateTask(payload);
+      else runner.createTask(payload);
+    }
+
+    function handleToggleTask(taskId, isDone) {
+      google.script.run
+        .withSuccessHandler(() => {
+          showToast(isDone ? 'Tugas selesai!' : 'Status dikembalikan ke To Do');
+          loadDashboard();
+        })
+        .withFailureHandler(err => showToast('Error: ' + err.message))
+        .toggleTaskStatus(taskId, isDone);
+    }
+
+    function handleDeleteTask(taskId) {
+      if (!confirm('Hapus tugas ' + taskId + ' secara permanen?')) return;
+      google.script.run
+        .withSuccessHandler(() => {
+          showToast('Tugas dihapus');
+          loadDashboard();
+        })
+        .withFailureHandler(err => showToast('Error: ' + err.message))
+        .deleteTask(taskId);
+    }
+
+    function handleSaveRoutine(routineId, dayOfWeek, category) {
+      const payload = {
+        routine_id: routineId,
+        day_of_week: dayOfWeek,
+        focus_category: category,
+        activity_name: document.getElementById(`rtn_act_${routineId}`).value,
+        start_time: document.getElementById(`rtn_start_${routineId}`).value,
+        end_time: document.getElementById(`rtn_end_${routineId}`).value,
+        is_active: true
+      };
+      google.script.run
+        .withSuccessHandler(() => {
+          showToast(`Jadwal ${dayOfWeek} diperbarui`);
+          loadDashboard();
+        })
+        .withFailureHandler(err => showToast('Error: ' + err.message))
+        .updateWeeklyRoutine(payload);
+    }
+
+    function handleVerifyDb() {
+      google.script.run
+        .withSuccessHandler(() => {
+          showToast('Database 7 tabel tersinkronisasi');
+          loadDashboard();
+        })
+        .withFailureHandler(err => showToast('Error: ' + err.message))
+        .setupDatabase();
+    }
+
+    function copyPromptFromBox(boxId) {
+      const text = document.getElementById(boxId).textContent;
+      if (!text) return;
+
+      const fallbackCopy = () => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand('copy');
+          showToast('Prompt berhasil disalin! Tempel ke ChatGPT/Gemini.');
+        } catch (e) {
+          showToast('Gagal menyalin otomatis, silakan blok & Ctrl+C.');
+        }
+        document.body.removeChild(ta);
+      };
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast('Prompt berhasil disalin! Tempel ke ChatGPT/Gemini.');
+        }).catch(fallbackCopy);
+      } else {
+        fallbackCopy();
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+  </script>
+  <script>
+(function () {
+  /* ---------- 1. Kolom baru di formulir Content Studio ---------- */
+  var hookEl = document.getElementById('contentHook');
+  if (hookEl && !document.getElementById('platformRow')) {
+    hookEl.closest('.form-group').insertAdjacentHTML('beforebegin',
+      '<div class="form-row" id="platformRow">' +
+        '<div class="form-group"><label class="form-label">Platform</label>' +
+          '<select class="select" id="contentPlatform" onchange="onPlatformChange()">' +
+            '<option value="Threads">Threads</option><option value="Instagram">Instagram</option>' +
+          '</select></div>' +
+        '<div class="form-group" id="visualStatusGroup" style="display:none;">' +
+          '<label class="form-label">Status Visual</label>' +
+          '<select class="select" id="contentVisualStatus">' +
+            '<option value="Belum dibuat">Belum dibuat</option>' +
+            '<option value="Sedang didesain">Sedang didesain</option>' +
+            '<option value="Siap">Siap</option>' +
+          '</select></div>' +
+      '</div>' +
+      '<div class="form-group" id="assetUrlGroup" style="display:none;">' +
+        '<label class="form-label">Tautan Aset Gambar / Carousel (Canva, Drive, OneDrive)</label>' +
+        '<input type="url" class="input" id="contentAssetUrl" placeholder="https://...">' +
+      '</div>');
+  }
+
+  /* ---------- 2. Fungsi pendukung ---------- */
+  window.onPlatformChange = function () {
+    var ig = document.getElementById('contentPlatform').value === 'Instagram';
+    document.getElementById('visualStatusGroup').style.display = ig ? '' : 'none';
+    document.getElementById('assetUrlGroup').style.display = ig ? '' : 'none';
+    document.getElementById('threadStats').style.display = ig ? 'none' : '';
+  };
+
+  window.buildCrossPrompt = function () {
+    var ig = document.getElementById('contentPlatform').value === 'Instagram';
+    var hook = document.getElementById('contentHook').value.trim() || '[Hook]';
+    var body = document.getElementById('contentBody').value.trim() || '(Belum ada draf)';
+    var task = ig
+      ? 'Ringkas materi Instagram di bawah menjadi utas Threads 4-6 post (maks. 450 karakter per post, pisahkan dengan ---). Nada lebih percakapan, tidak bergantung pada gambar, dan akhiri dengan ajakan membuka postingan Instagram.'
+      : 'Ubah utas Threads di bawah menjadi paket Instagram: (1) rencana carousel 5-7 slide (judul slide, teks singkat, saran chart atau ikon), (2) caption maksimal 2.200 karakter dengan hook kuat dan 3-5 hashtag, (3) prompt gambar/cover siap pakai, (4) teks alt untuk aksesibilitas.';
+    document.getElementById('contentPromptBox').textContent =
+      'Anda editor konten untuk Dev.Impact (analitis, berbasis bukti, mudah dipahami).\n\nTUGAS:\n' +
+      task + '\n\nMATERI SUMBER:\nHook: ' + hook + '\n' + body;
+  };
+
+  window.handleCreateLinked = function (id, target) {
+    google.script.run
+      .withSuccessHandler(function (res) {
+        showToast('Versi ' + target + ' dibuat (' + res.content_id + ')');
+        loadDashboard();
+      })
+      .withFailureHandler(function (err) { showToast('Error: ' + err.message); })
+      .createLinkedContent(id, target);
+  };
+
+  /* ---------- 3. Modal konten: isi kolom baru ---------- */
+  var origOpenContent = openContentModal;
+  openContentModal = function (account, contentId) {
+    origOpenContent(account, contentId);
+    var acc = normalizeAccount(account);
+    var cur = contentId ? (APP_STATE.data.contents || []).find(function (c) { return c.content_id === contentId; }) : null;
+    document.getElementById('platformRow').style.display = acc === 'Dev.Impact' ? '' : 'none';
+    document.getElementById('contentPlatform').value = (cur && cur.platform) || 'Threads';
+    document.getElementById('contentVisualStatus').value = (cur && cur.visual_status) || 'Belum dibuat';
+    document.getElementById('contentAssetUrl').value = (cur && cur.asset_url) || '';
+    onPlatformChange();
+    if (acc === 'Dev.Impact') {
+      document.getElementById('visualPromptChips').insertAdjacentHTML('beforeend',
+        '<button type="button" class="btn-chip" onclick="buildCrossPrompt()">Threads ke Instagram (atau sebaliknya)</button>');
+    }
+  };
+
+  /* ---------- 4. Simpan konten (menyimpan juga kolom baru) ---------- */
+  handleSaveContent = function (e) {
+    e.preventDefault();
+    var btn = document.getElementById('btnSaveContent');
+    var contentId = document.getElementById('contentId').value;
+    var schedRaw = document.getElementById('contentScheduledAt').value;
+    var payload = {
+      content_id: contentId,
+      account: document.getElementById('contentAccount').value,
+      input_mode: document.getElementById('contentInputMode').value,
+      pillar: document.getElementById('contentPillar').value,
+      status: document.getElementById('contentStatus').value,
+      scheduled_at: schedRaw ? schedRaw.replace('T', ' ') : '',
+      series_id: document.getElementById('contentSeriesId').value.trim(),
+      series_order: document.getElementById('contentSeriesOrder').value,
+      hook: document.getElementById('contentHook').value,
+      body_draft: document.getElementById('contentBody').value,
+      visual_concept: document.getElementById('contentVisual').value,
+      post_url: document.getElementById('contentPostUrl').value,
+      perf_metrics: document.getElementById('contentPerfMetrics').value
+    };
+    btn.disabled = true;
+    var done = function () {
+      btn.disabled = false;
+      closeModal('contentModal');
+      showToast(contentId ? 'Konten diperbarui' : 'Konten baru disimpan');
+      loadDashboard();
+    };
+    var fail = function (err) { btn.disabled = false; showToast('Error: ' + err.message); };
+    var saveMeta = function (id) {
+      google.script.run.withSuccessHandler(done).withFailureHandler(fail).updateContentMeta({
+        content_id: id,
+        platform: document.getElementById('contentPlatform').value,
+        visual_status: document.getElementById('contentVisualStatus').value,
+        asset_url: document.getElementById('contentAssetUrl').value
+      });
+    };
+    var runner = google.script.run.withFailureHandler(fail)
+      .withSuccessHandler(function (res) { saveMeta(contentId || res.content_id); });
+    if (contentId) runner.updateContent(payload); else runner.createContent(payload);
+  };
+
+  /* ---------- 5. Urutan mulai hari ini + perbaikan tanggal ---------- */
+  function sortData() {
+    var d = APP_STATE.data;
+    if (!d) return;
+    var today = d.todayStr;
+    (d.tasks || []).forEach(function (t) { t.due_date = String(t.due_date || '').slice(0, 10); });
+    (d.products || []).forEach(function (p) { p.launch_target = String(p.launch_target || '').slice(0, 10); });
+
+    function upcoming(list, getDate, isFinished) {
+      var rank = function (it) {
+        if (isFinished(it)) return 3;
+        var dt = getDate(it);
+        if (!dt) return 2;
+        return String(dt).slice(0, 10) >= today ? 0 : 1;
+      };
+      list.sort(function (a, b) {
+        var ra = rank(a), rb = rank(b);
+        if (ra !== rb) return ra - rb;
+        var da = String(getDate(a) || ''), db = String(getDate(b) || '');
+        return ra === 3 ? db.localeCompare(da) : da.localeCompare(db);
+      });
+    }
+    upcoming(d.tasks || [], function (t) { return t.scheduled_start || t.due_date; },
+      function (t) { return t.status === 'Done'; });
+    upcoming(d.contents || [], function (c) { return c.scheduled_at; },
+      function (c) { return c.status === 'Published' || c.status === 'Archived'; });
+    var byStart = function (a, b) { return String(a.start_time).localeCompare(String(b.start_time)); };
+    (d.allRoutines || []).sort(byStart);
+    (d.todayRoutines || []).sort(byStart);
+  }
+
+  /* ---------- 6. Lencana, tombol pasangan, filter platform (Dev.Impact) ---------- */
+  function enhanceDevCards() {
+    var d = APP_STATE.data;
+    if (!d) return;
+    var byId = {};
+    (d.contents || []).forEach(function (c) { byId[c.content_id] = c; });
+    var filt = APP_STATE.contentFilterPlatform || 'ALL';
+    var main = document.getElementById('mainContainer');
+
+    var bar = main.querySelector('.quick-bar');
+    if (bar && APP_STATE.contentTab === 'pipeline') {
+      var sel = document.createElement('select');
+      sel.className = 'select';
+      sel.innerHTML = '<option value="ALL">Semua Platform</option><option value="Threads">Threads</option><option value="Instagram">Instagram</option>';
+      sel.value = filt;
+      sel.onchange = function () { APP_STATE.contentFilterPlatform = sel.value; renderCurrentView(); };
+      bar.appendChild(sel);
+    }
+
+    var notReady = 0;
+    main.querySelectorAll('.task-item').forEach(function (row) {
+      var m = row.innerHTML.match(/CNT-\d+/);
+      var c = m && byId[m[0]];
+      if (!c) return;
+      var plat = c.platform || 'Threads';
+      if (filt !== 'ALL' && plat !== filt) { row.style.display = 'none'; return; }
+      if (plat === 'Instagram' && c.scheduled_at && c.status !== 'Published' && c.visual_status !== 'Siap') notReady++;
+
+      var meta = row.querySelector('.task-meta');
+      if (meta) {
+        var h = '<span class="badge ' + (plat === 'Instagram' ? 'badge-series' : 'badge-devimpact') + '">' + plat + '</span>';
+        if (plat === 'Instagram') {
+          h += '<span class="badge ' + (c.visual_status === 'Siap' ? 'badge-done' : 'badge-medium') + '">Visual: ' +
+               escapeHtml(c.visual_status || 'Belum dibuat') + '</span>';
+        }
+        if (c.linked_content_id) h += '<span class="badge badge-general">Pasangan: ' + escapeHtml(c.linked_content_id) + '</span>';
+        meta.insertAdjacentHTML('afterbegin', h);
+      }
+      var btns = row.lastElementChild;
+      if (btns && btns.tagName === 'DIV' && btns !== row.firstElementChild) {
+        var other = plat === 'Instagram' ? 'Threads' : 'Instagram';
+        btns.insertAdjacentHTML('afterbegin', c.linked_content_id
+          ? '<button class="btn btn-secondary btn-sm" onclick="openContentModal(\'Dev.Impact\',\'' + c.linked_content_id + '\')">Buka pasangan</button>'
+          : '<button class="btn btn-secondary btn-sm" onclick="handleCreateLinked(\'' + c.content_id + '\',\'' + other + '\')">+ Versi ' + other + '</button>');
+      }
+    });
+
+    var firstCard = main.querySelector('.card');
+    if (firstCard && notReady) {
+      firstCard.insertAdjacentHTML('beforeend',
+        '<div style="margin-top:8px; color:var(--color-danger); font-weight:600; font-size:12.5px;">' +
+        'Perhatian: ' + notReady + ' konten Instagram sudah terjadwal tetapi visualnya belum siap</div>');
+    }
+  }
+
+  /* ---------- 7. Sambungkan ke tampilan ---------- */
+  var origRender = renderCurrentView;
+  renderCurrentView = function () {
+    sortData();
+    origRender();
+    if (APP_STATE.currentView === 'devimpact') enhanceDevCards();
+  };
+})();
+</script>
+<!-- ===== TEMPELAN HP: tempel TEPAT SEBELUM baris </body> (di bawah tempelan sebelumnya) ===== -->
+<style>
+  #mccBar, #mccFab { display: none; }
+  #mccSheet, #mccQuick { display: none; }
+  #mccSheet.open { display: flex; }
+  #mccQuick.open { display: flex; }
+
+  #mccSheet { position: fixed; inset: 0; z-index: 70; background: rgba(15,23,42,.45); align-items: flex-end; }
+  .mcc-panel { width: 100%; background: var(--surface); border-radius: 16px 16px 0 0;
+               padding: 10px 14px calc(14px + env(safe-area-inset-bottom)); }
+  .mcc-panel-title { font-size: 12px; color: var(--text-muted); font-weight: 700; padding: 6px 12px 8px; }
+  .mcc-item { display: block; width: 100%; text-align: left; padding: 15px 12px; border: none;
+              border-bottom: 1px solid var(--border); background: none; font-size: 15px; font-weight: 600;
+              color: var(--text-primary); font-family: inherit; cursor: pointer; }
+  .mcc-item:last-child { border-bottom: none; }
+
+  #mccQuick { position: fixed; inset: 0; z-index: 90; background: var(--bg-app); padding: 18px;
+              flex-direction: column; gap: 12px; overflow-y: auto; }
+  #mccQuick .input, #mccQuick .select, #mccQuick .textarea { font-size: 16px; }
+
+  @media (max-width: 900px) {
+    body { padding-bottom: 76px; }
+    #mccBar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
+              background: var(--surface); border-top: 1px solid var(--border);
+              padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); }
+    .mcc-tab { flex: 1; background: none; border: none; padding: 7px 2px; font-size: 11px; font-weight: 600;
+               color: var(--text-secondary); display: flex; flex-direction: column; align-items: center;
+               gap: 2px; cursor: pointer; font-family: inherit; }
+    .mcc-tab .mcc-ic { font-size: 19px; line-height: 1; }
+    .mcc-tab.active { color: var(--color-brand); font-weight: 800; }
+    #mccFab { display: flex; position: fixed; right: 16px; bottom: 84px; width: 54px; height: 54px;
+              border-radius: 50%; background: var(--color-brand); color: #fff; font-size: 30px; line-height: 1;
+              border: none; z-index: 46; align-items: center; justify-content: center;
+              box-shadow: 0 4px 12px rgba(15,23,42,.3); cursor: pointer; }
+    .toast { bottom: 90px; left: 14px; right: 14px; text-align: center; }
+
+    .btn { min-height: 40px; }
+    .btn-sm { min-height: 36px; }
+    .btn-chip { min-height: 34px; }
+    .input, .select, .textarea { font-size: 16px; }
+    .quick-bar .select { width: 100%; }
+    .topbar-actions .btn { padding: 6px 9px; }
+    .modal-backdrop { padding: 0; align-items: flex-end; }
+    .modal-box { max-height: 94vh; border-radius: 14px 14px 0 0; }
+  }
+</style>
+
+<script>
+(function () {
+  /* ---------- Elemen baru ---------- */
+  document.body.insertAdjacentHTML('beforeend',
+    '<nav id="mccBar">' +
+      '<button class="mcc-tab" data-k="home" onclick="mccGo(\'today\')"><span class="mcc-ic">🏠</span>Home</button>' +
+      '<button class="mcc-tab" data-k="ideas" onclick="mccGo(\'ideas\')"><span class="mcc-ic">💡</span>Ide</button>' +
+      '<button class="mcc-tab" data-k="konten" onclick="mccSheet(\'konten\')"><span class="mcc-ic">✍️</span>Konten</button>' +
+      '<button class="mcc-tab" data-k="produk" onclick="mccGo(\'products\')"><span class="mcc-ic">🚀</span>Produk</button>' +
+      '<button class="mcc-tab" data-k="lainnya" onclick="mccSheet(\'lainnya\')"><span class="mcc-ic">⋯</span>Lainnya</button>' +
+    '</nav>' +
+    '<button id="mccFab" aria-label="Tambah cepat" onclick="mccSheet(\'tambah\')">+</button>' +
+    '<div id="mccSheet" onclick="if(event.target===this)mccCloseSheet()"><div class="mcc-panel" id="mccPanel"></div></div>' +
+    '<div id="mccQuick">' +
+      '<div style="font-size:18px; font-weight:800;">Catat ide cepat</div>' +
+      '<input type="text" class="input" id="mccQTitle" placeholder="Tulis inti ide...">' +
+      '<select class="select" id="mccQCat">' +
+        '<option value="Personal Threads">Personal Threads</option>' +
+        '<option value="Dev.Impact">Dev.Impact</option>' +
+        '<option value="Digital Product">Digital Product</option>' +
+        '<option value="General">General</option>' +
+      '</select>' +
+      '<textarea class="textarea" id="mccQNotes" rows="4" placeholder="Catatan tambahan (opsional)"></textarea>' +
+      '<button class="btn btn-primary" id="mccQSave" onclick="mccQuickSave()">Simpan Ide</button>' +
+      '<div id="mccQMsg" style="font-size:13px; min-height:20px;"></div>' +
+      '<button class="btn btn-secondary" onclick="document.getElementById(\'mccQuick\').classList.remove(\'open\')">Buka dashboard lengkap</button>' +
+    '</div>');
+
+  /* ---------- Lembar pilihan (muncul dari bawah) ---------- */
+  var SHEETS = {
+    konten: { title: 'Konten', items: [
+      ['Personal Threads', "mccGo('personal')"],
+      ['Dev.Impact (Threads & Instagram)', "mccGo('devimpact')"]
+    ]},
+    lainnya: { title: 'Menu lain', items: [
+      ['Calendar & Tasks', "mccGo('tasks')"],
+      ['Weekly Review', "mccGo('weekly')"],
+      ['Settings', "mccGo('settings')"],
+      ['Muat ulang data', "mccCloseSheet(); loadDashboard()"]
+    ]},
+    tambah: { title: 'Tambah cepat', items: [
+      ['Ide baru', "mccCloseSheet(); openIdeaModal()"],
+      ['Tugas baru', "mccCloseSheet(); openTaskModal()"],
+      ['Produk baru', "mccCloseSheet(); openProductModal()"]
+    ]}
+  };
+
+  window.mccSheet = function (key) {
+    var s = SHEETS[key];
+    var h = '<div class="mcc-panel-title">' + s.title + '</div>';
+    s.items.forEach(function (it) {
+      h += '<button class="mcc-item" onclick="' + it[1] + '">' + it[0] + '</button>';
+    });
+    document.getElementById('mccPanel').innerHTML = h;
+    document.getElementById('mccSheet').classList.add('open');
+  };
+  window.mccCloseSheet = function () {
+    document.getElementById('mccSheet').classList.remove('open');
+  };
+  window.mccGo = function (view) {
+    mccCloseSheet();
+    navigateTo(view);
+  };
+
+  /* ---------- Tandai tab aktif ---------- */
+  function setActive(view) {
+    var map = { today: 'home', ideas: 'ideas', personal: 'konten', devimpact: 'konten', products: 'produk' };
+    var k = map[view] || 'lainnya';
+    document.querySelectorAll('.mcc-tab').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-k') === k);
+    });
+  }
+  var origNav = navigateTo;
+  navigateTo = function (view) {
+    origNav(view);
+    setActive(view);
+    window.scrollTo(0, 0);
+  };
+  setActive('today');
+
+  /* ---------- Mode Cepat (buka link /exec?mode=capture) ---------- */
+  window.mccQuickSave = function () {
+    var title = document.getElementById('mccQTitle').value.trim();
+    var msg = document.getElementById('mccQMsg');
+    var btn = document.getElementById('mccQSave');
+    if (!title) { msg.style.color = 'var(--color-danger)'; msg.textContent = 'Tulis inti ide dulu.'; return; }
+    btn.disabled = true;
+    msg.style.color = 'var(--text-secondary)';
+    msg.textContent = 'Menyimpan...';
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.disabled = false;
+        document.getElementById('mccQTitle').value = '';
+        document.getElementById('mccQNotes').value = '';
+        msg.style.color = 'var(--color-success)';
+        msg.textContent = 'Tersimpan (' + res.idea_id + '). Tulis ide berikutnya atau tutup halaman ini.';
+        document.getElementById('mccQTitle').focus();
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        msg.style.color = 'var(--color-danger)';
+        msg.textContent = 'Gagal menyimpan: ' + err.message;
+      })
+      .createIdea({
+        title: title,
+        category: document.getElementById('mccQCat').value,
+        raw_notes: document.getElementById('mccQNotes').value
+      });
+  };
+
+  try {
+    google.script.url.getLocation(function (loc) {
+      if (loc && loc.parameter && loc.parameter.mode === 'capture') {
+        document.getElementById('mccQuick').classList.add('open');
+      }
+    });
+  } catch (e) {}
+})();
+</script>
+<!-- ===== TEMPELAN HP: tempel TEPAT SEBELUM baris </body> (di bawah tempelan sebelumnya) ===== -->
+<style>
+  #mccBar, #mccFab { display: none; }
+  #mccSheet, #mccQuick { display: none; }
+  #mccSheet.open { display: flex; }
+  #mccQuick.open { display: flex; }
+
+  #mccSheet { position: fixed; inset: 0; z-index: 70; background: rgba(15,23,42,.45); align-items: flex-end; }
+  .mcc-panel { width: 100%; background: var(--surface); border-radius: 16px 16px 0 0;
+               padding: 10px 14px calc(14px + env(safe-area-inset-bottom)); }
+  .mcc-panel-title { font-size: 12px; color: var(--text-muted); font-weight: 700; padding: 6px 12px 8px; }
+  .mcc-item { display: block; width: 100%; text-align: left; padding: 15px 12px; border: none;
+              border-bottom: 1px solid var(--border); background: none; font-size: 15px; font-weight: 600;
+              color: var(--text-primary); font-family: inherit; cursor: pointer; }
+  .mcc-item:last-child { border-bottom: none; }
+
+  #mccQuick { position: fixed; inset: 0; z-index: 90; background: var(--bg-app); padding: 18px;
+              flex-direction: column; gap: 12px; overflow-y: auto; }
+  #mccQuick .input, #mccQuick .select, #mccQuick .textarea { font-size: 16px; }
+
+  @media (max-width: 900px) {
+    body { padding-bottom: 76px; }
+    #mccBar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
+              background: var(--surface); border-top: 1px solid var(--border);
+              padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); }
+    .mcc-tab { flex: 1; background: none; border: none; padding: 7px 2px; font-size: 11px; font-weight: 600;
+               color: var(--text-secondary); display: flex; flex-direction: column; align-items: center;
+               gap: 2px; cursor: pointer; font-family: inherit; }
+    .mcc-tab .mcc-ic { font-size: 19px; line-height: 1; }
+    .mcc-tab.active { color: var(--color-brand); font-weight: 800; }
+    #mccFab { display: flex; position: fixed; right: 16px; bottom: 84px; width: 54px; height: 54px;
+              border-radius: 50%; background: var(--color-brand); color: #fff; font-size: 30px; line-height: 1;
+              border: none; z-index: 46; align-items: center; justify-content: center;
+              box-shadow: 0 4px 12px rgba(15,23,42,.3); cursor: pointer; }
+    .toast { bottom: 90px; left: 14px; right: 14px; text-align: center; }
+
+    .btn { min-height: 40px; }
+    .btn-sm { min-height: 36px; }
+    .btn-chip { min-height: 34px; }
+    .input, .select, .textarea { font-size: 16px; }
+    .quick-bar .select { width: 100%; }
+    .topbar-actions .btn { padding: 6px 9px; }
+    .modal-backdrop { padding: 0; align-items: flex-end; }
+    .modal-box { max-height: 94vh; border-radius: 14px 14px 0 0; }
+  }
+</style>
+
+<script>
+(function () {
+  /* ---------- Elemen baru ---------- */
+  document.body.insertAdjacentHTML('beforeend',
+    '<nav id="mccBar">' +
+      '<button class="mcc-tab" data-k="home" onclick="mccGo(\'today\')"><span class="mcc-ic">🏠</span>Home</button>' +
+      '<button class="mcc-tab" data-k="ideas" onclick="mccGo(\'ideas\')"><span class="mcc-ic">💡</span>Ide</button>' +
+      '<button class="mcc-tab" data-k="konten" onclick="mccSheet(\'konten\')"><span class="mcc-ic">✍️</span>Konten</button>' +
+      '<button class="mcc-tab" data-k="produk" onclick="mccGo(\'products\')"><span class="mcc-ic">🚀</span>Produk</button>' +
+      '<button class="mcc-tab" data-k="lainnya" onclick="mccSheet(\'lainnya\')"><span class="mcc-ic">⋯</span>Lainnya</button>' +
+    '</nav>' +
+    '<button id="mccFab" aria-label="Tambah cepat" onclick="mccSheet(\'tambah\')">+</button>' +
+    '<div id="mccSheet" onclick="if(event.target===this)mccCloseSheet()"><div class="mcc-panel" id="mccPanel"></div></div>' +
+    '<div id="mccQuick">' +
+      '<div style="font-size:18px; font-weight:800;">Catat ide cepat</div>' +
+      '<input type="text" class="input" id="mccQTitle" placeholder="Tulis inti ide...">' +
+      '<select class="select" id="mccQCat">' +
+        '<option value="Personal Threads">Personal Threads</option>' +
+        '<option value="Dev.Impact">Dev.Impact</option>' +
+        '<option value="Digital Product">Digital Product</option>' +
+        '<option value="General">General</option>' +
+      '</select>' +
+      '<textarea class="textarea" id="mccQNotes" rows="4" placeholder="Catatan tambahan (opsional)"></textarea>' +
+      '<button class="btn btn-primary" id="mccQSave" onclick="mccQuickSave()">Simpan Ide</button>' +
+      '<div id="mccQMsg" style="font-size:13px; min-height:20px;"></div>' +
+      '<button class="btn btn-secondary" onclick="document.getElementById(\'mccQuick\').classList.remove(\'open\')">Buka dashboard lengkap</button>' +
+    '</div>');
+
+  /* ---------- Lembar pilihan (muncul dari bawah) ---------- */
+  var SHEETS = {
+    konten: { title: 'Konten', items: [
+      ['Personal Threads', "mccGo('personal')"],
+      ['Dev.Impact (Threads & Instagram)', "mccGo('devimpact')"]
+    ]},
+    lainnya: { title: 'Menu lain', items: [
+      ['Calendar & Tasks', "mccGo('tasks')"],
+      ['Weekly Review', "mccGo('weekly')"],
+      ['Settings', "mccGo('settings')"],
+      ['Muat ulang data', "mccCloseSheet(); loadDashboard()"]
+    ]},
+    tambah: { title: 'Tambah cepat', items: [
+      ['Ide baru', "mccCloseSheet(); openIdeaModal()"],
+      ['Tugas baru', "mccCloseSheet(); openTaskModal()"],
+      ['Produk baru', "mccCloseSheet(); openProductModal()"]
+    ]}
+  };
+
+  window.mccSheet = function (key) {
+    var s = SHEETS[key];
+    var h = '<div class="mcc-panel-title">' + s.title + '</div>';
+    s.items.forEach(function (it) {
+      h += '<button class="mcc-item" onclick="' + it[1] + '">' + it[0] + '</button>';
+    });
+    document.getElementById('mccPanel').innerHTML = h;
+    document.getElementById('mccSheet').classList.add('open');
+  };
+  window.mccCloseSheet = function () {
+    document.getElementById('mccSheet').classList.remove('open');
+  };
+  window.mccGo = function (view) {
+    mccCloseSheet();
+    navigateTo(view);
+  };
+
+  /* ---------- Tandai tab aktif ---------- */
+  function setActive(view) {
+    var map = { today: 'home', ideas: 'ideas', personal: 'konten', devimpact: 'konten', products: 'produk' };
+    var k = map[view] || 'lainnya';
+    document.querySelectorAll('.mcc-tab').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-k') === k);
+    });
+  }
+  var origNav = navigateTo;
+  navigateTo = function (view) {
+    origNav(view);
+    setActive(view);
+    window.scrollTo(0, 0);
+  };
+  setActive('today');
+
+  /* ---------- Mode Cepat (buka link /exec?mode=capture) ---------- */
+  window.mccQuickSave = function () {
+    var title = document.getElementById('mccQTitle').value.trim();
+    var msg = document.getElementById('mccQMsg');
+    var btn = document.getElementById('mccQSave');
+    if (!title) { msg.style.color = 'var(--color-danger)'; msg.textContent = 'Tulis inti ide dulu.'; return; }
+    btn.disabled = true;
+    msg.style.color = 'var(--text-secondary)';
+    msg.textContent = 'Menyimpan...';
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.disabled = false;
+        document.getElementById('mccQTitle').value = '';
+        document.getElementById('mccQNotes').value = '';
+        msg.style.color = 'var(--color-success)';
+        msg.textContent = 'Tersimpan (' + res.idea_id + '). Tulis ide berikutnya atau tutup halaman ini.';
+        document.getElementById('mccQTitle').focus();
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        msg.style.color = 'var(--color-danger)';
+        msg.textContent = 'Gagal menyimpan: ' + err.message;
+      })
+      .createIdea({
+        title: title,
+        category: document.getElementById('mccQCat').value,
+        raw_notes: document.getElementById('mccQNotes').value
+      });
+  };
+
+  try {
+    google.script.url.getLocation(function (loc) {
+      if (loc && loc.parameter && loc.parameter.mode === 'capture') {
+        document.getElementById('mccQuick').classList.add('open');
+      }
+    });
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
