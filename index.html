@@ -1038,7 +1038,61 @@
       }
     }
     // === AKHIR JEMBATAN ===
+// === JEMBATAN GITHUB PAGES KE GOOGLE APPS SCRIPT ===
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwJNqrSqDz1XY8LIXhQzDK-3No6NTef1yzU_dLRiuHRQP35xEobbIkw49aTeGWzsaDh/exec";
 
+    if (typeof window.google === "undefined") {
+      window.google = {
+        script: {
+          url: {
+            getLocation: function(cb) {
+              const params = {};
+              new URLSearchParams(window.location.search).forEach((v, k) => { params[k] = v; });
+              cb({ parameter: params });
+            }
+          },
+          run: new Proxy({}, {
+            get: function(_, prop) {
+              if (prop === "withSuccessHandler" || prop === "withFailureHandler") {
+                return function(fn) {
+                  return createRunner(prop === "withSuccessHandler" ? fn : null, prop === "withFailureHandler" ? fn : null);
+                };
+              }
+              return createRunner(null, null)[prop];
+            }
+          })
+        }
+      };
+
+      function createRunner(onSuccess, onFailure) {
+        return new Proxy({}, {
+          get: function(_, prop) {
+            if (prop === "withSuccessHandler") return (fn) => createRunner(fn, onFailure);
+            if (prop === "withFailureHandler") return (fn) => createRunner(onSuccess, fn);
+            return function(...args) {
+              fetch(GAS_API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ fn: prop, args: args })
+              })
+              .then(r => r.json())
+              .then(data => {
+                if (data.ok) {
+                  if (onSuccess) onSuccess(data.result);
+                } else {
+                  if (onFailure) onFailure(new Error(data.error || "Terjadi kesalahan di server"));
+                }
+              })
+              .catch(err => {
+                if (onFailure) onFailure(err);
+              });
+            };
+          }
+        });
+      }
+    }
+    // === AKHIR JEMBATAN ===
+    
     const APP_STATE = {
       currentView: 'today',
       data: null,
