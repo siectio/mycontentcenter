@@ -984,7 +984,7 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    // === JEMBATAN GITHUB PAGES KE GOOGLE APPS SCRIPT ===
+  // === JEMBATAN GITHUB PAGES KE GOOGLE APPS SCRIPT ===
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwJNqrSqDz1XY8LIXhQzDK-3No6NTef1yzU_dLRiuHRQP35xEobbIkw49aTeGWzsaDh/exec";
 
     if (typeof window.google === "undefined") {
@@ -1016,22 +1016,35 @@
             if (prop === "withSuccessHandler") return (fn) => createRunner(fn, onFailure);
             if (prop === "withFailureHandler") return (fn) => createRunner(onSuccess, fn);
             return function(...args) {
-              fetch(GAS_API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ fn: prop, args: args })
-              })
-              .then(r => r.json())
-              .then(data => {
-                if (data.ok) {
-                  if (onSuccess) onSuccess(data.result);
-                } else {
-                  if (onFailure) onFailure(new Error(data.error || "Terjadi kesalahan di server"));
-                }
-              })
-              .catch(err => {
-                if (onFailure) onFailure(err);
-              });
+              const isReadOnly = (prop === "getDashboardBootstrap" && args.length === 0);
+              const req = isReadOnly
+                ? fetch(GAS_API_URL + "?action=" + encodeURIComponent(prop), { redirect: "follow" })
+                : fetch(GAS_API_URL, {
+                    method: "POST",
+                    redirect: "follow",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ fn: prop, args: args })
+                  });
+
+              req
+                .then(async r => {
+                  const text = await r.text();
+                  try {
+                    return JSON.parse(text);
+                  } catch (e) {
+                    throw new Error("Respons bukan JSON. Cek izin 'Anyone' di Apps Script. Cuplikan: " + text.slice(0, 120));
+                  }
+                })
+                .then(data => {
+                  if (data.ok) {
+                    if (onSuccess) onSuccess(data.result);
+                  } else {
+                    if (onFailure) onFailure(new Error(data.error || "Terjadi kesalahan di server"));
+                  }
+                })
+                .catch(err => {
+                  if (onFailure) onFailure(err);
+                });
             };
           }
         });
